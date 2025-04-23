@@ -2,14 +2,9 @@ import React, { useState } from "react";
 import { Circle, Square, Triangle, ImagePlus, X } from "lucide-react";
 
 const shapeIcons = {
-  // circle: <Circle className="w-5 h-5 mr-2" />,
   square: <Square className="w-5 h-5 mr-2" />,
   triangle: <Triangle className="w-5 h-5 mr-2" />,
-  ellipse: (
-    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-      <ellipse cx="12" cy="12" rx="8" ry="4" />
-    </svg>
-  )
+  circle: <Circle className="w-5 h-5 mr-2" />
 };
 
 const ElementsSection = ({ addShape, handleImageUpload }) => {
@@ -25,7 +20,7 @@ const ElementsSection = ({ addShape, handleImageUpload }) => {
       <div>
         <h2 className="text-xl font-semibold mb-3">Add Shape</h2>
         <div className="flex flex-col gap-2">
-          {[ "square", "triangle", "ellipse"].map((shape) => (
+          {[ "square", "triangle", "circle"].map((shape) => (
             <button
               key={shape}
               className="flex items-center px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg transition text-left"

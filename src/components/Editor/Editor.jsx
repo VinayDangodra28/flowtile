@@ -617,7 +617,7 @@ const Editor = () => {
               {/* Label styled like a button to trigger the input */}
               <label
                 htmlFor="upload-input"
-                className="flex items-center text-center w-1/2 cursor-pointer px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition"
+                className="flex items-center justify-center text-center w-1/2 cursor-pointer px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition"
               >
                 Import
               </label>

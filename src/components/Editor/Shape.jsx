@@ -1,5 +1,5 @@
 export default class Shape {
-  constructor(x, y, width, height, color, type = "circle", imageSrc = null) {
+  constructor(x, y, width, height, color, type = "square", imageSrc = null) {
     this.x = x;
     this.y = y;
     this.width = width;
@@ -18,11 +18,7 @@ export default class Shape {
   draw(ctx, canvasWidth, canvasHeight, isSelected) {
     ctx.fillStyle = this.color;
 
-    if (this.type === "circle") {
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.width / 2, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (this.type === "square") {
+     if (this.type === "square") {
       ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
     } else if (this.type === "triangle") {
       ctx.beginPath();
@@ -33,50 +29,9 @@ export default class Shape {
       ctx.fill();
     } else if (this.type === "rectangle") {
       ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
-    } else if (this.type === "ellipse") {
+    } else if (this.type === "circle") {
       ctx.beginPath();
       ctx.ellipse(this.x, this.y, this.width / 2, this.height / 2, 0, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (this.type === "pentagon") {
-      const angle = (2 * Math.PI) / 5;
-      ctx.beginPath();
-      ctx.moveTo(this.x + this.width / 2 * Math.cos(0), this.y + this.height / 2 * Math.sin(0));
-      for (let i = 1; i < 5; i++) {
-        ctx.lineTo(
-          this.x + this.width / 2 * Math.cos(i * angle),
-          this.y + this.height / 2 * Math.sin(i * angle)
-        );
-      }
-      ctx.closePath();
-      ctx.fill();
-    } else if (this.type === "hexagon") {
-      const angle = (2 * Math.PI) / 6;
-      ctx.beginPath();
-      ctx.moveTo(this.x + this.width / 2 * Math.cos(0), this.y + this.height / 2 * Math.sin(0));
-      for (let i = 1; i < 6; i++) {
-        ctx.lineTo(
-          this.x + this.width / 2 * Math.cos(i * angle),
-          this.y + this.height / 2 * Math.sin(i * angle)
-        );
-      }
-      ctx.closePath();
-      ctx.fill();
-    } else if (this.type === "star") {
-      const outerRadius = this.width / 2;
-      const innerRadius = this.height / 2;
-      ctx.beginPath();
-      ctx.moveTo(this.x + outerRadius * Math.cos(0), this.y + outerRadius * Math.sin(0));
-      for (let i = 1; i < 5; i++) {
-        ctx.lineTo(
-          this.x + innerRadius * Math.cos((i + 0.5) * 2 * Math.PI / 5),
-          this.y + innerRadius * Math.sin((i + 0.5) * 2 * Math.PI / 5)
-        );
-        ctx.lineTo(
-          this.x + outerRadius * Math.cos(i * 2 * Math.PI / 5),
-          this.y + outerRadius * Math.sin(i * 2 * Math.PI / 5)
-        );
-      }
-      ctx.closePath();
       ctx.fill();
     } else if (this.type === "image" && this.image && this.image.complete) {
       ctx.drawImage(this.image, this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
@@ -86,11 +41,11 @@ export default class Shape {
       ctx.strokeStyle = "black";
       ctx.lineWidth = 2;
 
-      if (this.type === "circle" || this.type === "ellipse") {
+      if ( this.type === "circle") {
         ctx.strokeRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
       } else if (this.type === "square" || this.type === "rectangle" || this.type === "image") {
         ctx.strokeRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
-      } else if (this.type === "triangle" || this.type === "pentagon" || this.type === "hexagon" || this.type === "star") {
+      } else if (this.type === "triangle") {
         ctx.stroke();
       }
 
@@ -103,23 +58,17 @@ export default class Shape {
   }
 
   isClicked(mx, my) {
-    if (this.type === "circle") {
-      return Math.hypot(mx - this.x, my - this.y) <= this.width / 2;
-    } else if (this.type === "square" || this.type === "rectangle" || this.type === "image") {
+     if (this.type === "square" || this.type === "rectangle" || this.type === "image") {
       return mx >= this.x - this.width / 2 && mx <= this.x + this.width / 2 && my >= this.y - this.height / 2 && my <= this.y + this.height / 2;
     } else if (this.type === "triangle") {
       let a = { x: this.x, y: this.y - this.height / 2 };
       let b = { x: this.x - this.width / 2, y: this.y + this.height / 2 };
       let c = { x: this.x + this.width / 2, y: this.y + this.height / 2 };
       return this.isPointInTriangle({ x: mx, y: my }, a, b, c);
-    } else if (this.type === "ellipse") {
+    } else if (this.type === "circle") {
       const dx = mx - this.x;
       const dy = my - this.y;
       return (dx * dx) / (this.width * this.width / 4) + (dy * dy) / (this.height * this.height / 4) <= 1;
-    } else if (this.type === "pentagon" || this.type === "hexagon" || this.type === "star") {
-      const ctx = document.createElement('canvas').getContext('2d');
-      this.draw(ctx, 0, 0, false);
-      return ctx.isPointInPath(this.path, mx, my);
     }
     return false;
   }
@@ -160,11 +109,7 @@ export default class Shape {
     ];
 
     offsets.forEach(({ dx, dy }) => {
-      if (this.type === "circle") {
-        ctx.beginPath();
-        ctx.arc(this.x + dx, this.y + dy, this.width / 2, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (this.type === "square" || this.type === "rectangle" || this.type === "image") {
+      if (this.type === "square" || this.type === "rectangle" || this.type === "image") {
         if (this.type === "image" && this.image && this.image.complete) {
           ctx.drawImage(this.image, this.x + dx - this.width / 2, this.y + dy - this.height / 2, this.width, this.height);
         } else {
@@ -177,50 +122,9 @@ export default class Shape {
         ctx.lineTo(this.x + dx + this.width / 2, this.y + dy + this.height / 2);
         ctx.closePath();
         ctx.fill();
-      } else if (this.type === "ellipse") {
+      } else if (this.type === "circle") {
         ctx.beginPath();
         ctx.ellipse(this.x + dx, this.y + dy, this.width / 2, this.height / 2, 0, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (this.type === "pentagon") {
-        const angle = (2 * Math.PI) / 5;
-        ctx.beginPath();
-        ctx.moveTo(this.x + dx + this.width / 2 * Math.cos(0), this.y + dy + this.height / 2 * Math.sin(0));
-        for (let i = 1; i < 5; i++) {
-          ctx.lineTo(
-            this.x + dx + this.width / 2 * Math.cos(i * angle),
-            this.y + dy + this.height / 2 * Math.sin(i * angle)
-          );
-        }
-        ctx.closePath();
-        ctx.fill();
-      } else if (this.type === "hexagon") {
-        const angle = (2 * Math.PI) / 6;
-        ctx.beginPath();
-        ctx.moveTo(this.x + dx + this.width / 2 * Math.cos(0), this.y + dy + this.height / 2 * Math.sin(0));
-        for (let i = 1; i < 6; i++) {
-          ctx.lineTo(
-            this.x + dx + this.width / 2 * Math.cos(i * angle),
-            this.y + dy + this.height / 2 * Math.sin(i * angle)
-          );
-        }
-        ctx.closePath();
-        ctx.fill();
-      } else if (this.type === "star") {
-        const outerRadius = this.width / 2;
-        const innerRadius = this.height / 2;
-        ctx.beginPath();
-        ctx.moveTo(this.x + dx + outerRadius * Math.cos(0), this.y + dy + outerRadius * Math.sin(0));
-        for (let i = 1; i < 5; i++) {
-          ctx.lineTo(
-            this.x + dx + innerRadius * Math.cos((i + 0.5) * 2 * Math.PI / 5),
-            this.y + dy + innerRadius * Math.sin((i + 0.5) * 2 * Math.PI / 5)
-          );
-          ctx.lineTo(
-            this.x + dx + outerRadius * Math.cos(i * 2 * Math.PI / 5),
-            this.y + dy + outerRadius * Math.sin(i * 2 * Math.PI / 5)
-          );
-        }
-        ctx.closePath();
         ctx.fill();
       }
     });
