@@ -6,7 +6,15 @@ const App = () => {
   return (
     <div>
       <Navbar />
-      <Editor />
+      {/* Show warning on small screens */}
+      <div className="block md:hidden text-center p-8 text-red-600 font-semibold text-lg">
+        This application is not available on mobile devices.
+      </div>
+
+      {/* Show editor only on medium and larger screens */}
+      <div className="hidden md:block">
+        <Editor />
+      </div>
     </div>
   );
 };
