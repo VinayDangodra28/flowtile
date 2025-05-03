@@ -6,6 +6,7 @@ export default class Shape {
     this.height = height;
     this.color = color;
     this.type = type;
+    this.rotation = 0; // New rotation property
 
     this.image = null;
 
@@ -16,9 +17,14 @@ export default class Shape {
   }
 
   draw(ctx, canvasWidth, canvasHeight, isSelected) {
-    ctx.fillStyle = this.color;
+    ctx.save(); // Save the current state
+    ctx.translate(this.x, this.y); // Move to the shape's center
+    ctx.rotate(this.rotation); // Apply rotation
+    ctx.translate(-this.x, -this.y); // Move back
 
-     if (this.type === "square") {
+    // Draw the shape
+    ctx.fillStyle = this.color;
+    if (this.type === "square") {
       ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
     } else if (this.type === "triangle") {
       ctx.beginPath();
@@ -37,21 +43,25 @@ export default class Shape {
       ctx.drawImage(this.image, this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
     }
 
+    ctx.restore(); // Restore the previous state
+
+    // Draw the non-rotating outline and resize handle if selected
     if (isSelected) {
+      ctx.save();
+
+      // Draw the outline
       ctx.strokeStyle = "black";
       ctx.lineWidth = 2;
+      ctx.strokeRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
 
-      if ( this.type === "circle") {
-        ctx.strokeRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
-      } else if (this.type === "square" || this.type === "rectangle" || this.type === "image") {
-        ctx.strokeRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
-      } else if (this.type === "triangle") {
-        ctx.stroke();
-      }
-
+      // Draw the resize handle
       const handleSize = 10;
+      const handleX = this.x + this.width / 2 - handleSize / 2;
+      const handleY = this.y + this.height / 2 - handleSize / 2;
       ctx.fillStyle = "gray";
-      ctx.fillRect(this.x + this.width / 2 - handleSize / 2, this.y + this.height / 2 - handleSize / 2, handleSize, handleSize);
+      ctx.fillRect(handleX, handleY, handleSize, handleSize);
+
+      ctx.restore();
     }
 
     this.wrapAround(ctx, canvasWidth, canvasHeight);
@@ -109,24 +119,32 @@ export default class Shape {
     ];
 
     offsets.forEach(({ dx, dy }) => {
-      if (this.type === "square" || this.type === "rectangle" || this.type === "image") {
-        if (this.type === "image" && this.image && this.image.complete) {
-          ctx.drawImage(this.image, this.x + dx - this.width / 2, this.y + dy - this.height / 2, this.width, this.height);
-        } else {
-          ctx.fillRect(this.x + dx - this.width / 2, this.y + dy - this.height / 2, this.width, this.height);
-        }
+      ctx.save();
+      ctx.translate(this.x + dx, this.y + dy);
+      ctx.rotate(this.rotation);
+      ctx.translate(-(this.x + dx), -(this.y + dy));
+
+      if (this.type === "square" || this.type === "rectangle") {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x + dx - this.width / 2, this.y + dy - this.height / 2, this.width, this.height);
       } else if (this.type === "triangle") {
         ctx.beginPath();
         ctx.moveTo(this.x + dx, this.y + dy - this.height / 2);
         ctx.lineTo(this.x + dx - this.width / 2, this.y + dy + this.height / 2);
         ctx.lineTo(this.x + dx + this.width / 2, this.y + dy + this.height / 2);
         ctx.closePath();
+        ctx.fillStyle = this.color;
         ctx.fill();
       } else if (this.type === "circle") {
         ctx.beginPath();
         ctx.ellipse(this.x + dx, this.y + dy, this.width / 2, this.height / 2, 0, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
         ctx.fill();
+      } else if (this.type === "image" && this.image && this.image.complete) {
+        ctx.drawImage(this.image, this.x + dx - this.width / 2, this.y + dy - this.height / 2, this.width, this.height);
       }
+
+      ctx.restore();
     });
   }
 

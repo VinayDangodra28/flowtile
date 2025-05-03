@@ -249,8 +249,12 @@ const Editor = () => {
   
     const newShape = new Shape(x, y, size, size, color, type);
   
-    newShape.locked = false; // Initialize lock state
-    setShapes((prevShapes) => [...prevShapes, newShape]);
+    if (newShape instanceof Shape) {
+      newShape.locked = false; // Initialize lock state
+      setShapes((prevShapes) => [...prevShapes, newShape]);
+    } else {
+      console.error("Attempted to add an invalid shape object:", newShape);
+    }
   };
   
 
@@ -322,6 +326,22 @@ const Editor = () => {
         newShapes.splice(index - 1, 0, selectedShape);
         setShapes(newShapes);
       }
+    }
+  };
+
+  const duplicateShape = () => {
+    if (selectedShape) {
+      const duplicatedShape = new Shape(
+        selectedShape.x + 20, // Offset the duplicated shape slightly
+        selectedShape.y + 20,
+        selectedShape.width,
+        selectedShape.height,
+        selectedShape.color,
+        selectedShape.type
+      );
+      duplicatedShape.rotation = selectedShape.rotation;
+      duplicatedShape.locked = selectedShape.locked;
+      setShapes((prevShapes) => [...prevShapes, duplicatedShape]);
     }
   };
 
@@ -639,6 +659,9 @@ const Editor = () => {
               moveShapeUp={moveShapeUp}
               moveShapeDown={moveShapeDown}
               deleteShape={deleteShape}
+              shapes={shapes} // Pass shapes prop
+              setShapes={setShapes} // Pass setShapes prop
+              duplicateShape={duplicateShape}
             />
           )}
         </div>
