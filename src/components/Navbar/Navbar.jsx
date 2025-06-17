@@ -3,9 +3,18 @@ import React from "react";
 
 const Navbar = () => {
   return (
-    <nav className="flex items-center justify-between px-8 py-4 bg-gray-900 text-white">
+    <nav className="flex items-center justify-between px-8 bg-gray-900 text-white"
+      style={{
+        height: "10vh",
+        minHeight: "10vh",
+        maxHeight: "10vh",
+      }}
+      >
       <div className="flex items-center">
-        <img src="/flowtile.svg" alt="FlowTile Logo" className="h-12 mr-4" />
+        <img src="/flowtile.svg" alt="FlowTile Logo" style={{
+          height: "5vh",
+          width: "5vh",
+        }} />
         <h1 className="text-2xl font-semibold">FlowTile</h1>
       </div>
       <a

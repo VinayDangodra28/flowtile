@@ -26,6 +26,19 @@ const Editor = () => {
   const [maxCanvasWidth, setMaxCanvasWidth] = useState(800); // Default max width
   const [maxCanvasHeight, setMaxCanvasHeight] = useState(600); // Default max height
   const [isSnapping, setIsSnapping] = useState(false); // Track snapping state
+  const [undoStack, setUndoStack] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
+  const [prevShapeState, setPrevShapeState] = useState(null); // Track previous shape state
+  const [lastAction, setLastAction] = useState(null); // Track last action type
+  const [zoom, setZoom] = useState(1); // Zoom state
+  const [pan, setPan] = useState({ x: 0, y: 0 }); // Pan state
+  const [tileType, setTileType] = useState("square"); // Add tileType state
+  const [brickOffset, setBrickOffset] = useState(50); // percent offset for brick
+  const isPanning = useRef(false);
+  const lastPan = useRef({ x: 0, y: 0 });
+
+  // Refs for the 8 overlay canvases
+  const overlayRefs = Array.from({ length: 8 }, () => useRef(null));
 
   // Define custom snap lines
   const customSnapLines = [
@@ -33,6 +46,8 @@ const Editor = () => {
     { type: 'horizontal', position: 250 },
     { type: 'vertical', position: 500 },
     { type: 'horizontal', position: 500 },
+    { type: 'vertical', position: 0 },
+    { type: 'horizontal', position: 0 },
   ];
 
   // Define snap lines dynamically based on shapes, excluding the selected shape while dragging
@@ -74,6 +89,9 @@ const Editor = () => {
 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(pan.x, pan.y); // Apply pan
+      ctx.scale(zoom, zoom); // Apply zoom
 
       // Draw snap lines only if snapping
       if (isSnapping) {
@@ -102,16 +120,51 @@ const Editor = () => {
         if (shape instanceof Shape) {
           shape.updatePosition(canvas.width, canvas.height);
           shape.draw(ctx, canvas.width, canvas.height, shape === selectedShape);
+          shape.wrapAround(
+            ctx,
+            canvas.width,
+            canvas.height,
+            tileType === "brick" ? { type: tileType, offset: brickOffset } : tileType
+          );
         } else {
           console.error("Invalid shape object detected:", shape);
         }
       });
 
+      ctx.restore(); // Restore context
       requestAnimationFrame(draw);
     };
 
     draw();
-  }, [shapes, selectedShape, snapLines, dragging, isSnapping]);
+  }, [shapes, selectedShape, snapLines, dragging, isSnapping, zoom, pan, tileType, brickOffset]);
+
+  // Helper to push current shapes to undo stack
+  const pushToUndoStack = () => {
+    setUndoStack((prev) => [...prev, JSON.stringify(shapes)]);
+    setRedoStack([]); // Clear redo stack on new action
+  };
+
+  // Undo function
+  const handleUndo = () => {
+    if (undoStack.length === 0) return;
+    setRedoStack((prev) => [...prev, JSON.stringify(shapes)]);
+    const prevShapes = JSON.parse(undoStack[undoStack.length - 1]);
+    setShapes(prevShapes.map((data) => new Shape(
+      data.x, data.y, data.width, data.height, data.color, data.type, data.image, data.opacity, data.shadow, data.gradient
+    )));
+    setUndoStack((prev) => prev.slice(0, -1));
+  };
+
+  // Redo function
+  const handleRedo = () => {
+    if (redoStack.length === 0) return;
+    setUndoStack((prev) => [...prev, JSON.stringify(shapes)]);
+    const nextShapes = JSON.parse(redoStack[redoStack.length - 1]);
+    setShapes(nextShapes.map((data) => new Shape(
+      data.x, data.y, data.width, data.height, data.color, data.type, data.image, data.opacity, data.shadow, data.gradient
+    )));
+    setRedoStack((prev) => prev.slice(0, -1));
+  };
 
   const handleMouseDown = (e) => {
     if (selectedShape && selectedShape.locked) return;
@@ -122,6 +175,8 @@ const Editor = () => {
 
     if (selectedShape && selectedShape.isResizeHandleClicked(x, y)) {
       setResizing(true);
+      setLastAction('resize');
+      setPrevShapeState(JSON.stringify(shapes));
       return;
     }
 
@@ -130,10 +185,12 @@ const Editor = () => {
 
     if (clickedShape) {
       setDragging(true);
+      setLastAction('move');
       clickedShape.offset = {
         x: x - clickedShape.x,
         y: y - clickedShape.y,
       };
+      setPrevShapeState(JSON.stringify(shapes));
     }
   };
 
@@ -162,6 +219,13 @@ const Editor = () => {
 
       selectedShape.width = newWidth;
       selectedShape.height = newHeight;
+      // Push to undo stack on every resize step
+      if (lastAction === 'resize') {
+        setUndoStack((prev) => [...prev, prevShapeState]);
+        setRedoStack([]);
+        setPrevShapeState(JSON.stringify(shapes));
+        setLastAction(null); // Only once per resize session
+      }
     }
 
     // --- Rotate ---
@@ -224,6 +288,13 @@ const Editor = () => {
 
       selectedShape.x = newX;
       selectedShape.y = newY;
+      // Push to undo stack on every move step
+      if (lastAction === 'move') {
+        setUndoStack((prev) => [...prev, prevShapeState]);
+        setRedoStack([]);
+        setPrevShapeState(JSON.stringify(shapes));
+        setLastAction(null); // Only once per move session
+      }
     }
 
     setIsSnapping(isSnappingLocal); // Update snapping state
@@ -237,9 +308,12 @@ const Editor = () => {
     if (selectedShape) {
       delete selectedShape.offset;
     }
+    setPrevShapeState(null);
+    setLastAction(null);
   };
 
   const addShape = (type) => {
+    pushToUndoStack();
     const x = Math.random() * canvasSize.width;
     const y = Math.random() * canvasSize.height;
     const size = 20 + Math.random() * 30;
@@ -299,6 +373,7 @@ const Editor = () => {
   };
 
   const deleteShape = () => {
+    pushToUndoStack();
     if (selectedShape) {
       setShapes(shapes.filter((shape) => shape !== selectedShape));
       setSelectedShape(null);
@@ -306,6 +381,7 @@ const Editor = () => {
   };
 
   const moveShapeUp = () => {
+    pushToUndoStack();
     if (selectedShape) {
       const index = shapes.indexOf(selectedShape);
       if (index < shapes.length - 1) {
@@ -318,6 +394,7 @@ const Editor = () => {
   };
 
   const moveShapeDown = () => {
+    pushToUndoStack();
     if (selectedShape) {
       const index = shapes.indexOf(selectedShape);
       if (index > 0) {
@@ -330,6 +407,7 @@ const Editor = () => {
   };
 
   const duplicateShape = () => {
+    pushToUndoStack();
     if (selectedShape) {
       const duplicatedShape = new Shape(
         selectedShape.x + 20, // Offset the duplicated shape slightly
@@ -337,7 +415,11 @@ const Editor = () => {
         selectedShape.width,
         selectedShape.height,
         selectedShape.color,
-        selectedShape.type
+        selectedShape.type,
+        selectedShape.image?.src || null, // Use the image source if available
+        selectedShape.opacity,
+        selectedShape.shadow,
+        selectedShape.gradient
       );
       duplicatedShape.rotation = selectedShape.rotation;
       duplicatedShape.locked = selectedShape.locked;
@@ -519,6 +601,7 @@ const Editor = () => {
   };
 
   const importShapes = (e) => {
+    pushToUndoStack();
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -554,8 +637,93 @@ const Editor = () => {
     }
   };
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Normalize key for cross-browser (e.key can be 'Z' or 'z')
+      const key = e.key.toLowerCase();
+      // Ctrl+Z or Cmd+Z for undo
+      if ((e.ctrlKey || e.metaKey) && key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      // Ctrl+Y or Cmd+Y or Ctrl+Shift+Z or Cmd+Shift+Z for redo
+      } else if (
+        (e.ctrlKey || e.metaKey) &&
+        (key === 'y' || (key === 'z' && e.shiftKey))
+      ) {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undoStack, redoStack, shapes]);
+
+  // Pan handlers
+  const handleCanvasMouseDown = (e) => {
+    if (e.button === 1 || (e.button === 0 && e.altKey)) { // Middle mouse or Alt+Left
+      isPanning.current = true;
+      lastPan.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+      window.addEventListener('mousemove', handleCanvasMouseMove);
+      window.addEventListener('mouseup', handleCanvasMouseUp);
+    } else {
+      handleMouseDown(e);
+    }
+  };
+  const handleCanvasMouseMove = (e) => {
+    if (isPanning.current) {
+      setPan({ x: e.clientX - lastPan.current.x, y: e.clientY - lastPan.current.y });
+    } else {
+      handleMouseMove(e);
+    }
+  };
+  const handleCanvasMouseUp = (e) => {
+    if (isPanning.current) {
+      isPanning.current = false;
+      window.removeEventListener('mousemove', handleCanvasMouseMove);
+      window.removeEventListener('mouseup', handleCanvasMouseUp);
+    } else {
+      handleMouseUp(e);
+    }
+  };
+  // Reset pan on zoom out to 1
+  useEffect(() => {
+    if (zoom === 1) setPan({ x: 0, y: 0 });
+  }, [zoom]);
+
+  // Draw overlays when main canvas changes
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const mainCanvas = canvasRef.current;
+    overlayRefs.forEach((ref) => {
+      const overlay = ref.current;
+      if (!overlay) return;
+      overlay.width = mainCanvas.width;
+      overlay.height = mainCanvas.height;
+      const ctx = overlay.getContext('2d');
+      ctx.clearRect(0, 0, overlay.width, overlay.height);
+      ctx.drawImage(mainCanvas, 0, 0);
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, overlay.width, overlay.height);
+      ctx.globalAlpha = 1;
+    });
+  }, [shapes, selectedShape, snapLines, dragging, isSnapping, zoom, pan, tileType, canvasSize]);
+
+  // Helper for overlay positions
+  const overlayPositions = [
+    { top: '-100%', left: '-100%' }, // top-left
+    { top: '-100%', left: '0' },    // top
+    { top: '-100%', left: '100%' }, // top-right
+    { top: '0', left: '-100%' },    // left
+    { top: '0', left: '100%' },     // right
+    { top: '100%', left: '-100%' }, // bottom-left
+    { top: '100%', left: '0' },     // bottom
+    { top: '100%', left: '100%' },  // bottom-right
+  ];
+
   return (
-    <div ref={parentRef} className="flex flex-col editor">
+    <div ref={parentRef} className="flex flex-col editor" style={{ height: "90vh" }}>
       <div className="flex flex-1">
         {/* Sidebar */}
         <div className="w-3/10 bg-gray-200 flex flex-row justify-between gap-1 z-10">
@@ -582,7 +750,7 @@ const Editor = () => {
             )}
             {activeSection === "canvas" && (
               <div>
-                <CanvasSection canvasSize={canvasSize} updateCanvasSize={updateCanvasSize} downloadCanvas={downloadCanvas} />
+                <CanvasSection canvasSize={canvasSize} updateCanvasSize={updateCanvasSize} downloadCanvas={downloadCanvas} setCanvasSize={setCanvasSize} />
               </div>
             )}
             {activeSection === "grid" && (
@@ -595,34 +763,83 @@ const Editor = () => {
         </div>
 
         {/* Canvas Section */}
-        <div className="w-5/10 flex flex-col items-center p-4">
-
+        <div className="w-5/10 flex flex-col items-center p-4" style={{ overflow: 'auto', maxHeight: '90vh', position: 'relative' }}>
+          {/* Tile Type Selector */}
+          <div className="flex gap-2 mb-2">
+            <label className="text-sm font-medium text-gray-700">Tile Type:</label>
+            <select
+              value={tileType}
+              onChange={e => setTileType(e.target.value)}
+              className="border border-gray-300 rounded px-2 py-1 text-sm"
+            >
+              <option value="square">Square</option>
+              <option value="brick">Brick</option>
+            </select>
+            {tileType === "brick" && (
+              <>
+                <label className="ml-2 text-sm font-medium text-gray-700">Brick Offset %</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={brickOffset}
+                  onChange={e => setBrickOffset(Number(e.target.value))}
+                  className="border border-gray-300 rounded px-2 py-1 text-sm w-16"
+                />
+              </>
+            )}
+          </div>
+          {/* Overlay Canvases */}
+          {overlayRefs.map((ref, i) => (
+            <canvas
+              key={i}
+              ref={ref}
+              width={canvasSize.width}
+              height={canvasSize.height}
+              style={{
+                position: 'fixed',
+                zIndex: -1,
+                pointerEvents: 'none',
+                ...overlayPositions[i],
+                width: canvasSize.width,
+                height: canvasSize.height,
+              }}
+            />
+          ))}
+          {/* Main Canvas */}
           <canvas
             ref={canvasRef}
             width={canvasSize.width}
             height={canvasSize.height}
             className="border rounded"
-            onMouseDown={handleMouseDown}
+            onMouseDown={handleCanvasMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
+            style={{ cursor: isPanning.current ? 'grab' : (dragging ? 'grabbing' : 'default'), position: 'relative', zIndex: 1 }}
           ></canvas>
         </div>
 
         {/* Tools Section */}
-        <div className="w-2/10 bg-gray-200 p-4 flex flex-col">
+        <div className="w-2/10 bg-gray-200 p-4 flex flex-col"
+        style={{
+          height: "90vh",
+        }}
+        >
           <div className="mb-4 flex flex-col space-x-2">
             <div className="flex space-x-2 mb-2 items-center">
               <button
-                onClick={() => downloadCanvas("png")}
-                className="w-1/2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                onClick={handleUndo}
+                className="w-1/2 px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 transition"
+                disabled={undoStack.length === 0}
               >
-                Download PNG
+                Undo
               </button>
               <button
-                onClick={() => downloadCanvas("svg")}
-                className="w-1/2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                onClick={handleRedo}
+                className="w-1/2 px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 transition"
+                disabled={redoStack.length === 0}
               >
-                Download SVG
+                Redo
               </button>
             </div>
             <div className="flex space-x-2 mb-2 items-center">

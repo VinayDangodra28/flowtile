@@ -1,12 +1,12 @@
 export default class Shape {
-  constructor(x, y, width, height, color, type = "square", imageSrc = null) {
+  constructor(x, y, width, height, color, type = "square", imageSrc = null, opacity = 1, shadow = null, gradient = null) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
     this.color = color;
     this.type = type;
-    this.rotation = 0; // New rotation property
+    this.rotation = 0;
 
     this.image = null;
 
@@ -14,16 +14,51 @@ export default class Shape {
       this.image = new Image();
       this.image.src = imageSrc;
     }
+
+    this.opacity = typeof opacity === 'number' ? opacity : 1;
+    this.shadow = shadow || {
+      offsetX: 0,
+      offsetY: 0,
+      blur: 0,
+      color: "black",
+      opacity: 1,
+    };
+    this.gradient = gradient || null;
   }
 
   draw(ctx, canvasWidth, canvasHeight, isSelected) {
-    ctx.save(); // Save the current state
-    ctx.translate(this.x, this.y); // Move to the shape's center
-    ctx.rotate(this.rotation); // Apply rotation
-    ctx.translate(-this.x, -this.y); // Move back
+    ctx.save(); // Save the initial state
 
-    // Draw the shape
-    ctx.fillStyle = this.color;
+    // Set shadow properties
+    if (this.shadow) {
+      ctx.shadowOffsetX = this.shadow.offsetX;
+      ctx.shadowOffsetY = this.shadow.offsetY;
+      ctx.shadowBlur = this.shadow.blur;
+      ctx.shadowColor = this.shadow.color;
+    }
+
+    // Draw the shape with opacity
+    ctx.save(); // Save the state before setting opacity
+    ctx.globalAlpha = this.opacity;
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+    ctx.translate(-this.x, -this.y);
+
+    if (this.gradient) {
+      const gradient = ctx.createLinearGradient(
+        this.x - this.width / 2,
+        this.y - this.height / 2,
+        this.x + this.width / 2,
+        this.y + this.height / 2
+      );
+      this.gradient.forEach(({ offset, color }) => {
+        gradient.addColorStop(offset, color);
+      });
+      ctx.fillStyle = gradient;
+    } else {
+      ctx.fillStyle = this.color;
+    }
+
     if (this.type === "square") {
       ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
     } else if (this.type === "triangle") {
@@ -43,32 +78,33 @@ export default class Shape {
       ctx.drawImage(this.image, this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
     }
 
-    ctx.restore(); // Restore the previous state
+    ctx.restore(); // Restore the state after drawing
 
     // Draw the non-rotating outline and resize handle if selected
     if (isSelected) {
       ctx.save();
-
-      // Draw the outline
       ctx.strokeStyle = "black";
       ctx.lineWidth = 2;
       ctx.strokeRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
-
-      // Draw the resize handle
       const handleSize = 10;
       const handleX = this.x + this.width / 2 - handleSize / 2;
       const handleY = this.y + this.height / 2 - handleSize / 2;
       ctx.fillStyle = "gray";
       ctx.fillRect(handleX, handleY, handleSize, handleSize);
-
       ctx.restore();
     }
+
+    ctx.restore(); // Restore the initial state
 
     this.wrapAround(ctx, canvasWidth, canvasHeight);
   }
 
+  // ... rest of the Shape class methods (isClicked, isPointInTriangle, etc.) ...
+// }
+
+
   isClicked(mx, my) {
-     if (this.type === "square" || this.type === "rectangle" || this.type === "image") {
+    if (this.type === "square" || this.type === "rectangle" || this.type === "image") {
       return mx >= this.x - this.width / 2 && mx <= this.x + this.width / 2 && my >= this.y - this.height / 2 && my <= this.y + this.height / 2;
     } else if (this.type === "triangle") {
       let a = { x: this.x, y: this.y - this.height / 2 };
@@ -104,28 +140,77 @@ export default class Shape {
     const handleY = this.y + this.height / 2 - handleSize / 2;
     return mx >= handleX && mx <= handleX + handleSize && my >= handleY && my <= handleY + handleSize;
   }
+getOffsets(tileType, canvasWidth, canvasHeight) {
+  switch(tileType) {
+    case "square":
+      return [
+        { dx: 0, dy: 0 },
+        { dx: -canvasWidth, dy: 0 },
+        { dx: canvasWidth, dy: 0 },
+        { dx: 0, dy: -canvasHeight },
+        { dx: 0, dy: canvasHeight },
+        { dx: -canvasWidth, dy: -canvasHeight },
+        { dx: canvasWidth, dy: -canvasHeight },
+        { dx: -canvasWidth, dy: canvasHeight },
+        { dx: canvasWidth, dy: canvasHeight },
+      ];
+    
+    case "brick":
+      // In a brick pattern, every alternate row is horizontally offset by half a tile
+      return [
+        { dx: 0, dy: 0 },
+        { dx: -canvasWidth, dy: 0 },
+        { dx: canvasWidth, dy: 0 },
+        { dx: -canvasWidth / 2, dy: -canvasHeight },
+        { dx: canvasWidth / 2, dy: -canvasHeight },
+        { dx: -canvasWidth / 2, dy: canvasHeight },
+        { dx: canvasWidth / 2, dy: canvasHeight },
+      ];
 
-  wrapAround(ctx, canvasWidth, canvasHeight) {
-    const offsets = [
-      { dx: 0, dy: 0 },
-      { dx: -canvasWidth, dy: 0 },
-      { dx: canvasWidth, dy: 0 },
-      { dx: 0, dy: -canvasHeight },
-      { dx: 0, dy: canvasHeight },
-      { dx: -canvasWidth, dy: -canvasHeight },
-      { dx: canvasWidth, dy: -canvasHeight },
-      { dx: -canvasWidth, dy: canvasHeight },
-      { dx: canvasWidth, dy: canvasHeight },
-    ];
+    case "hex":
+      // Assuming pointy-top hexagons (you can adapt for flat-top)
+      const w = canvasWidth;
+      const h = canvasHeight * 0.75; // vertical distance between rows
+      return [
+        { dx: 0, dy: 0 },
+        { dx: w, dy: 0 },
+        { dx: -w, dy: 0 },
+        { dx: w / 2, dy: h },
+        { dx: -w / 2, dy: h },
+        { dx: w / 2, dy: -h },
+        { dx: -w / 2, dy: -h },
+      ];
 
+    default:
+      return [{ dx: 0, dy: 0 }];
+  }
+}
+
+  wrapAround(ctx, canvasWidth, canvasHeight, tileType = "brick") {
+   const offsets = this.getOffsets(tileType, canvasWidth, canvasHeight);
     offsets.forEach(({ dx, dy }) => {
       ctx.save();
       ctx.translate(this.x + dx, this.y + dy);
       ctx.rotate(this.rotation);
       ctx.translate(-(this.x + dx), -(this.y + dy));
 
+      // Gradient fix: create gradient for each repeated shape
+      let fillStyle = this.color;
+      if (this.gradient) {
+        const gradient = ctx.createLinearGradient(
+          this.x + dx - this.width / 2,
+          this.y + dy - this.height / 2,
+          this.x + dx + this.width / 2,
+          this.y + dy + this.height / 2
+        );
+        this.gradient.forEach(({ offset, color }) => {
+          gradient.addColorStop(offset, color);
+        });
+        fillStyle = gradient;
+      }
+      ctx.fillStyle = fillStyle;
+
       if (this.type === "square" || this.type === "rectangle") {
-        ctx.fillStyle = this.color;
         ctx.fillRect(this.x + dx - this.width / 2, this.y + dy - this.height / 2, this.width, this.height);
       } else if (this.type === "triangle") {
         ctx.beginPath();
@@ -133,12 +218,10 @@ export default class Shape {
         ctx.lineTo(this.x + dx - this.width / 2, this.y + dy + this.height / 2);
         ctx.lineTo(this.x + dx + this.width / 2, this.y + dy + this.height / 2);
         ctx.closePath();
-        ctx.fillStyle = this.color;
         ctx.fill();
       } else if (this.type === "circle") {
         ctx.beginPath();
         ctx.ellipse(this.x + dx, this.y + dy, this.width / 2, this.height / 2, 0, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
         ctx.fill();
       } else if (this.type === "image" && this.image && this.image.complete) {
         ctx.drawImage(this.image, this.x + dx - this.width / 2, this.y + dy - this.height / 2, this.width, this.height);
