@@ -26,7 +26,7 @@ export default class Shape {
     this.gradient = gradient || null;
   }
 
-  draw(ctx, canvasWidth, canvasHeight, isSelected) {
+  draw(ctx, canvasWidth, canvasHeight, isSelected, tileType = "square") {
     ctx.save(); // Save the initial state
 
     // Set shadow properties
@@ -52,7 +52,9 @@ export default class Shape {
         this.y + this.height / 2
       );
       this.gradient.forEach(({ offset, color }) => {
-        gradient.addColorStop(offset, color);
+        // Clamp offset to [0, 1] to avoid IndexSizeError
+        const safeOffset = Math.max(0, Math.min(1, offset));
+        gradient.addColorStop(safeOffset, color);
       });
       ctx.fillStyle = gradient;
     } else {
@@ -96,12 +98,8 @@ export default class Shape {
 
     ctx.restore(); // Restore the initial state
 
-    this.wrapAround(ctx, canvasWidth, canvasHeight);
+    this.wrapAround(ctx, canvasWidth, canvasHeight, tileType); // <-- pass tileType from Editor
   }
-
-  // ... rest of the Shape class methods (isClicked, isPointInTriangle, etc.) ...
-// }
-
 
   isClicked(mx, my) {
     if (this.type === "square" || this.type === "rectangle" || this.type === "image") {
@@ -140,56 +138,63 @@ export default class Shape {
     const handleY = this.y + this.height / 2 - handleSize / 2;
     return mx >= handleX && mx <= handleX + handleSize && my >= handleY && my <= handleY + handleSize;
   }
-getOffsets(tileType, canvasWidth, canvasHeight) {
-  switch(tileType) {
-    case "square":
-      return [
-        { dx: 0, dy: 0 },
-        { dx: -canvasWidth, dy: 0 },
-        { dx: canvasWidth, dy: 0 },
-        { dx: 0, dy: -canvasHeight },
-        { dx: 0, dy: canvasHeight },
-        { dx: -canvasWidth, dy: -canvasHeight },
-        { dx: canvasWidth, dy: -canvasHeight },
-        { dx: -canvasWidth, dy: canvasHeight },
-        { dx: canvasWidth, dy: canvasHeight },
-      ];
-    
-    case "brick":
-      // In a brick pattern, every alternate row is horizontally offset by half a tile
-      return [
-        { dx: 0, dy: 0 },
-        { dx: -canvasWidth, dy: 0 },
-        { dx: canvasWidth, dy: 0 },
-        { dx: -canvasWidth / 2, dy: -canvasHeight },
-        { dx: canvasWidth / 2, dy: -canvasHeight },
-        { dx: -canvasWidth / 2, dy: canvasHeight },
-        { dx: canvasWidth / 2, dy: canvasHeight },
-      ];
 
-    case "hex":
-      // Assuming pointy-top hexagons (you can adapt for flat-top)
-      const w = canvasWidth;
-      const h = canvasHeight * 0.75; // vertical distance between rows
-      return [
-        { dx: 0, dy: 0 },
-        { dx: w, dy: 0 },
-        { dx: -w, dy: 0 },
-        { dx: w / 2, dy: h },
-        { dx: -w / 2, dy: h },
-        { dx: w / 2, dy: -h },
-        { dx: -w / 2, dy: -h },
-      ];
+  getOffsets(tileType, canvasWidth, canvasHeight) {
+    switch(tileType) {
+      case "square":
+        return [
+          // { dx: 0, dy: 0 },
+          { dx: -canvasWidth, dy: 0 },
+          { dx: canvasWidth, dy: 0 },
+          { dx: 0, dy: -canvasHeight },
+          { dx: 0, dy: canvasHeight },
+          { dx: -canvasWidth, dy: -canvasHeight },
+          { dx: canvasWidth, dy: -canvasHeight },
+          { dx: -canvasWidth, dy: canvasHeight },
+          { dx: canvasWidth, dy: canvasHeight },
+        ];
+      
+      case "brick":
+        // In a brick pattern, every alternate row is horizontally offset by half a tile
+        return [
+          // { dx: 0, dy: 0 },
+          { dx: -canvasWidth, dy: 0 },
+          { dx: canvasWidth, dy: 0 },
+          { dx: -canvasWidth / 2, dy: -canvasHeight },
+          { dx: canvasWidth / 2, dy: -canvasHeight },
+          { dx: -canvasWidth / 2, dy: canvasHeight },
+          { dx: canvasWidth / 2, dy: canvasHeight },
+        ];
 
-    default:
-      return [{ dx: 0, dy: 0 }];
+      default:
+        return [{ dx: 0, dy: 0 }];
+    }
   }
-}
 
-  wrapAround(ctx, canvasWidth, canvasHeight, tileType = "brick") {
-   const offsets = this.getOffsets(tileType, canvasWidth, canvasHeight);
+  wrapAround(ctx, canvasWidth, canvasHeight, tileType = "square") {
+    const offsets = this.getOffsets(tileType, canvasWidth, canvasHeight);
     offsets.forEach(({ dx, dy }) => {
       ctx.save();
+      // Set shadow properties for each offset shape
+      if (this.shadow) {
+        ctx.shadowOffsetX = this.shadow.offsetX;
+        ctx.shadowOffsetY = this.shadow.offsetY;
+        ctx.shadowBlur = this.shadow.blur;
+        // Support shadow opacity (convert to rgba if needed)
+        let shadowColor = this.shadow.color;
+        if (this.shadow.opacity < 1) {
+          // Convert hex to rgba
+          const hex = shadowColor.replace('#', '');
+          const bigint = parseInt(hex, 16);
+          const r = (bigint >> 16) & 255;
+          const g = (bigint >> 8) & 255;
+          const b = bigint & 255;
+          shadowColor = `rgba(${r},${g},${b},${this.shadow.opacity})`;
+        }
+        ctx.shadowColor = shadowColor;
+      }
+      // Fix: Only apply opacity to fill, not to shadow
+      ctx.globalAlpha = 1;
       ctx.translate(this.x + dx, this.y + dy);
       ctx.rotate(this.rotation);
       ctx.translate(-(this.x + dx), -(this.y + dy));
@@ -204,12 +209,17 @@ getOffsets(tileType, canvasWidth, canvasHeight) {
           this.y + dy + this.height / 2
         );
         this.gradient.forEach(({ offset, color }) => {
-          gradient.addColorStop(offset, color);
+          // Clamp offset to [0, 1] to avoid IndexSizeError
+          const safeOffset = Math.max(0, Math.min(1, offset));
+          gradient.addColorStop(safeOffset, color);
         });
         fillStyle = gradient;
       }
       ctx.fillStyle = fillStyle;
 
+      // Set fill alpha for shape
+      ctx.save();
+      ctx.globalAlpha = this.opacity;
       if (this.type === "square" || this.type === "rectangle") {
         ctx.fillRect(this.x + dx - this.width / 2, this.y + dy - this.height / 2, this.width, this.height);
       } else if (this.type === "triangle") {
@@ -226,6 +236,7 @@ getOffsets(tileType, canvasWidth, canvasHeight) {
       } else if (this.type === "image" && this.image && this.image.complete) {
         ctx.drawImage(this.image, this.x + dx - this.width / 2, this.y + dy - this.height / 2, this.width, this.height);
       }
+      ctx.restore(); // restore fill alpha
 
       ctx.restore();
     });

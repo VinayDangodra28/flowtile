@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import Shape from "./Shape";
 import ShapeList from "./ShapeList";
 import Sidebar from "./Sidebar";
@@ -8,8 +9,10 @@ import CanvasSection from "./CanvasSection";
 import ArrangeSection from "./ArrangeSection";
 import { GridSection } from "./GridSection";
 import './styles.css'
+import { saveProject as saveProjectModel, loadProject as loadProjectModel, listProjects } from "../../utils/projectModel";
 
 const Editor = () => {
+  const { projectName } = useParams();
   const canvasRef = useRef(null);
   const parentRef = useRef(null);
   const [canvasSize, setCanvasSize] = useState({ width: 500, height: 500 });
@@ -30,15 +33,8 @@ const Editor = () => {
   const [redoStack, setRedoStack] = useState([]);
   const [prevShapeState, setPrevShapeState] = useState(null); // Track previous shape state
   const [lastAction, setLastAction] = useState(null); // Track last action type
-  const [zoom, setZoom] = useState(1); // Zoom state
-  const [pan, setPan] = useState({ x: 0, y: 0 }); // Pan state
-  const [tileType, setTileType] = useState("square"); // Add tileType state
-  const [brickOffset, setBrickOffset] = useState(50); // percent offset for brick
-  const isPanning = useRef(false);
-  const lastPan = useRef({ x: 0, y: 0 });
-
-  // Refs for the 8 overlay canvases
-  const overlayRefs = Array.from({ length: 8 }, () => useRef(null));
+  const [tileType, setTileType] = useState("square");
+  const [brickOffset, setBrickOffset] = useState(50); // for brick offset
 
   // Define custom snap lines
   const customSnapLines = [
@@ -89,9 +85,6 @@ const Editor = () => {
 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.save();
-      ctx.translate(pan.x, pan.y); // Apply pan
-      ctx.scale(zoom, zoom); // Apply zoom
 
       // Draw snap lines only if snapping
       if (isSnapping) {
@@ -119,24 +112,17 @@ const Editor = () => {
       shapes.forEach((shape) => {
         if (shape instanceof Shape) {
           shape.updatePosition(canvas.width, canvas.height);
-          shape.draw(ctx, canvas.width, canvas.height, shape === selectedShape);
-          shape.wrapAround(
-            ctx,
-            canvas.width,
-            canvas.height,
-            tileType === "brick" ? { type: tileType, offset: brickOffset } : tileType
-          );
+          shape.draw(ctx, canvas.width, canvas.height, shape === selectedShape, tileType); // Pass tileType here
         } else {
           console.error("Invalid shape object detected:", shape);
         }
       });
 
-      ctx.restore(); // Restore context
       requestAnimationFrame(draw);
     };
 
     draw();
-  }, [shapes, selectedShape, snapLines, dragging, isSnapping, zoom, pan, tileType, brickOffset]);
+  }, [shapes, selectedShape, snapLines, dragging, isSnapping]);
 
   // Helper to push current shapes to undo stack
   const pushToUndoStack = () => {
@@ -579,6 +565,23 @@ const Editor = () => {
     setShapes([...shapes]); // Force re-render
   };
 
+  // Helper to get serializable shapes for saving/export
+  const getSerializableShapes = () =>
+    shapes.map((shape) => ({
+      x: shape.x,
+      y: shape.y,
+      width: shape.width,
+      height: shape.height,
+      color: shape.color,
+      type: shape.type,
+      rotation: shape.rotation,
+      locked: shape.locked,
+      image: shape.type === "image" ? shape.image?.src || null : null,
+      opacity: shape.opacity,
+      shadow: shape.shadow,
+      gradient: shape.gradient,
+    }));
+
   const exportShapes = () => {
     const shapesData = shapes.map((shape) => ({
       x: shape.x,
@@ -659,68 +662,53 @@ const Editor = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undoStack, redoStack, shapes]);
 
-  // Pan handlers
-  const handleCanvasMouseDown = (e) => {
-    if (e.button === 1 || (e.button === 0 && e.altKey)) { // Middle mouse or Alt+Left
-      isPanning.current = true;
-      lastPan.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
-      window.addEventListener('mousemove', handleCanvasMouseMove);
-      window.addEventListener('mouseup', handleCanvasMouseUp);
-    } else {
-      handleMouseDown(e);
+  // Save Project Functionality (save to current project only, using export logic)
+  const saveProject = () => {
+    if (!projectName) {
+      alert("No project is currently open.");
+      return;
     }
+    const projectData = {
+      shapes: getSerializableShapes(),
+      canvasSize,
+      // Add other relevant state if needed
+    };
+    saveProjectModel(projectName, projectData);
+    alert(`Project '${projectName}' saved!`);
   };
-  const handleCanvasMouseMove = (e) => {
-    if (isPanning.current) {
-      setPan({ x: e.clientX - lastPan.current.x, y: e.clientY - lastPan.current.y });
-    } else {
-      handleMouseMove(e);
-    }
-  };
-  const handleCanvasMouseUp = (e) => {
-    if (isPanning.current) {
-      isPanning.current = false;
-      window.removeEventListener('mousemove', handleCanvasMouseMove);
-      window.removeEventListener('mouseup', handleCanvasMouseUp);
-    } else {
-      handleMouseUp(e);
-    }
-  };
-  // Reset pan on zoom out to 1
-  useEffect(() => {
-    if (zoom === 1) setPan({ x: 0, y: 0 });
-  }, [zoom]);
 
-  // Draw overlays when main canvas changes
+  // Load Project Functionality (using the model)
   useEffect(() => {
-    if (!canvasRef.current) return;
-    const mainCanvas = canvasRef.current;
-    overlayRefs.forEach((ref) => {
-      const overlay = ref.current;
-      if (!overlay) return;
-      overlay.width = mainCanvas.width;
-      overlay.height = mainCanvas.height;
-      const ctx = overlay.getContext('2d');
-      ctx.clearRect(0, 0, overlay.width, overlay.height);
-      ctx.drawImage(mainCanvas, 0, 0);
-      ctx.globalAlpha = 0.5;
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, overlay.width, overlay.height);
-      ctx.globalAlpha = 1;
-    });
-  }, [shapes, selectedShape, snapLines, dragging, isSnapping, zoom, pan, tileType, canvasSize]);
+    if (projectName) {
+      const data = loadProjectModel(projectName);
+      if (data && Array.isArray(data.shapes)) {
+        setCanvasSize(data.canvasSize || { width: 500, height: 500 });
+        setShapes(
+          data.shapes.map(
+            (s) => new Shape(
+              s.x, s.y, s.width, s.height, s.color, s.type, s.image, s.opacity, s.shadow, s.gradient
+            )
+          )
+        );
+      } else {
+        // If no data, reset to blank
+        setCanvasSize({ width: 500, height: 500 });
+        setShapes([]);
+      }
+    }
+    // Only run on mount or when projectName changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectName]);
 
-  // Helper for overlay positions
-  const overlayPositions = [
-    { top: '-100%', left: '-100%' }, // top-left
-    { top: '-100%', left: '0' },    // top
-    { top: '-100%', left: '100%' }, // top-right
-    { top: '0', left: '-100%' },    // left
-    { top: '0', left: '100%' },     // right
-    { top: '100%', left: '-100%' }, // bottom-left
-    { top: '100%', left: '0' },     // bottom
-    { top: '100%', left: '100%' },  // bottom-right
-  ];
+  // Autosave to current project if projectName is present
+  useEffect(() => {
+    if (!projectName) return;
+    // Only save if shapes or canvasSize are not empty/default
+    if (shapes.length === 0 && canvasSize.width === 500 && canvasSize.height === 500) return;
+    const projectData = { shapes: getSerializableShapes(), canvasSize };
+    saveProjectModel(projectName, projectData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shapes, canvasSize, projectName]);
 
   return (
     <div ref={parentRef} className="flex flex-col editor" style={{ height: "90vh" }}>
@@ -750,7 +738,7 @@ const Editor = () => {
             )}
             {activeSection === "canvas" && (
               <div>
-                <CanvasSection canvasSize={canvasSize} updateCanvasSize={updateCanvasSize} downloadCanvas={downloadCanvas} setCanvasSize={setCanvasSize} />
+                <CanvasSection canvasSize={canvasSize} updateCanvasSize={updateCanvasSize} downloadCanvas={downloadCanvas} />
               </div>
             )}
             {activeSection === "grid" && (
@@ -763,7 +751,7 @@ const Editor = () => {
         </div>
 
         {/* Canvas Section */}
-        <div className="w-5/10 flex flex-col items-center p-4" style={{ overflow: 'auto', maxHeight: '90vh', position: 'relative' }}>
+        <div className="w-5/10 flex flex-col items-center p-4">
           {/* Tile Type Selector */}
           <div className="flex gap-2 mb-2">
             <label className="text-sm font-medium text-gray-700">Tile Type:</label>
@@ -774,6 +762,7 @@ const Editor = () => {
             >
               <option value="square">Square</option>
               <option value="brick">Brick</option>
+              <option value="hex">Hex</option>
             </select>
             {tileType === "brick" && (
               <>
@@ -789,36 +778,17 @@ const Editor = () => {
               </>
             )}
           </div>
-          {/* Overlay Canvases */}
-          {overlayRefs.map((ref, i) => (
-            <canvas
-              key={i}
-              ref={ref}
-              width={canvasSize.width}
-              height={canvasSize.height}
-              style={{
-                position: 'fixed',
-                zIndex: -1,
-                pointerEvents: 'none',
-                ...overlayPositions[i],
-                width: canvasSize.width,
-                height: canvasSize.height,
-              }}
-            />
-          ))}
           {/* Main Canvas */}
           <canvas
             ref={canvasRef}
             width={canvasSize.width}
             height={canvasSize.height}
             className="border rounded"
-            onMouseDown={handleCanvasMouseDown}
+            onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
-            style={{ cursor: isPanning.current ? 'grab' : (dragging ? 'grabbing' : 'default'), position: 'relative', zIndex: 1 }}
           ></canvas>
         </div>
-
         {/* Tools Section */}
         <div className="w-2/10 bg-gray-200 p-4 flex flex-col"
         style={{
@@ -850,7 +820,6 @@ const Editor = () => {
                 Export
               </button>
 
-              
               {/* Label styled like a button to trigger the input */}
               <label
                 htmlFor="upload-input"
@@ -868,6 +837,19 @@ const Editor = () => {
                 className="hidden"
               />
             </div>
+            {/* Save and Load Project Buttons */}
+            <button
+              className="bg-yellow-500 text-white px-4 py-2 rounded mb-2 w-full"
+              onClick={saveProject}
+            >
+              Save Project
+            </button>
+            <button
+              className="bg-blue-500 text-white px-4 py-2 rounded mb-2 w-full"
+              onClick={() => alert('Load Project logic goes here!')}
+            >
+              Load Project
+            </button>
           </div>
 
           {selectedShape && (
