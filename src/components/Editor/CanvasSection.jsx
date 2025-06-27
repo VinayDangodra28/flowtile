@@ -59,12 +59,6 @@ const CanvasSection = ({ canvasSize, updateCanvasSize, downloadCanvas }) => {
           >
             Update Canvas Size
           </button>
-          <button
-            className="bg-gray-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition"
-            onClick={() => downloadCanvas("png")}
-          >
-            Download Canvas
-          </button>
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@ import CanvasSection from "./CanvasSection";
 import ArrangeSection from "./ArrangeSection";
 import { GridSection } from "./GridSection";
 import './styles.css'
-import { saveProject as saveProjectModel, loadProject as loadProjectModel, listProjects } from "../../utils/projectModel";
+import { saveProject as saveProjectModel, loadProject as loadProjectModel, listProjects, saveImageToIndexedDB, getImageFromIndexedDB } from "../../utils/projectModel";
 
 const Editor = () => {
   const { projectName } = useParams();
@@ -35,6 +35,11 @@ const Editor = () => {
   const [lastAction, setLastAction] = useState(null); // Track last action type
   const [tileType, setTileType] = useState("square");
   const [brickOffset, setBrickOffset] = useState(50); // for brick offset
+  const [pendingDownload, setPendingDownload] = useState(false);
+  const [pendingExport, setPendingExport] = useState(false);
+  const [pendingGrid, setPendingGrid] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [downloadFormat, setDownloadFormat] = useState("svg");
 
   // Define custom snap lines
   const customSnapLines = [
@@ -318,13 +323,13 @@ const Editor = () => {
   };
   
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
+      reader.onload = async (event) => {
+        const img = new window.Image();
+        img.onload = async () => {
           const maxSize = Math.min(canvasSize.width, canvasSize.height) * 0.5;
           let width = img.width;
           let height = img.height;
@@ -344,12 +349,21 @@ const Editor = () => {
           const x = Math.random() * (canvasSize.width - width);
           const y = Math.random() * (canvasSize.height - height);
 
-          const uniqueImageSrc = event.target.result;
+          // Store image in IndexedDB and get key
+          const imageKey = await saveImageToIndexedDB(event.target.result);
 
-          const newShape = new Shape(x, y, width, height, "transparent", "image", uniqueImageSrc);
-          console.log(newShape.image.src)
+          const newShape = new Shape(x, y, width, height, "transparent", "image", null);
+          newShape.imageKey = imageKey;
           newShape.locked = false;
-          setShapes((prevShapes) => [...prevShapes, newShape]);
+          // Load image for display
+          getImageFromIndexedDB(imageKey).then((dataUrl) => {
+            if (dataUrl) {
+              const imgObj = new window.Image();
+              imgObj.src = dataUrl;
+              newShape.image = imgObj;
+              setShapes((prevShapes) => [...prevShapes, newShape]);
+            }
+          });
         };
         img.src = event.target.result;
       };
@@ -402,58 +416,121 @@ const Editor = () => {
         selectedShape.height,
         selectedShape.color,
         selectedShape.type,
-        selectedShape.image?.src || null, // Use the image source if available
+        null, // imageSrc is not used
         selectedShape.opacity,
         selectedShape.shadow,
         selectedShape.gradient
       );
       duplicatedShape.rotation = selectedShape.rotation;
       duplicatedShape.locked = selectedShape.locked;
-      setShapes((prevShapes) => [...prevShapes, duplicatedShape]);
+      if (selectedShape.type === "image" && selectedShape.imageKey) {
+        duplicatedShape.imageKey = selectedShape.imageKey;
+        getImageFromIndexedDB(selectedShape.imageKey).then((dataUrl) => {
+          if (dataUrl) {
+            const imgObj = new window.Image();
+            imgObj.src = dataUrl;
+            duplicatedShape.image = imgObj;
+            setShapes((prevShapes) => [...prevShapes, duplicatedShape]);
+          }
+        });
+      } else {
+        setShapes((prevShapes) => [...prevShapes, duplicatedShape]);
+      }
     }
   };
 
   const downloadCanvas = (format = "png") => {
-    if (format === "svg") {
-      convertCanvasToSVG(); // <-- Call the manual SVG converter
-      return;
-    }
-
-    const canvas = canvasRef.current;
-
-    // Create a new canvas element with the same dimensions as the original canvas
-    const exportCanvas = document.createElement("canvas");
-    exportCanvas.width = canvas.width;
-    exportCanvas.height = canvas.height;
-    const exportCtx = exportCanvas.getContext("2d");
-
-    // Draw the original canvas content onto the new canvas
-    exportCtx.drawImage(canvas, 0, 0);
-
-    // Export the canvas content as an image with the original quality
-    const link = document.createElement("a");
-    link.download = `canvas.${format}`;
-    link.href = exportCanvas.toDataURL(`image/${format}`, 1.0);
-    link.click();
+    setSelectedShape(null);
+    setPendingDownload(format);
   };
 
-  // Convert canvas to SVG manually (basic shapes only)
-  const convertCanvasToSVG = () => {
-    let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasSize.width}" height="${canvasSize.height}">`;
+  // Convert canvas to SVG manually (basic shapes only, now with gradient, square, and wraparound support)
+  const convertCanvasToSVG = async () => {
+    let svgContent = `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"${canvasSize.width}\" height=\"${canvasSize.height}\">`;
+    let defs = '';
+    let shapeSvgs = '';
 
-    shapes.forEach((shape) => {
-      if (shape.type === "rectangle") {
-        svgContent += `<rect x="${shape.x}" y="${shape.y}" width="${shape.width}" height="${shape.height}" fill="${shape.color}" transform="rotate(${shape.rotation}, ${shape.x}, ${shape.y})"/>`;
-      } else if (shape.type === "circle") {
-        svgContent += `<circle cx="${shape.x + shape.width / 2}" cy="${shape.y + shape.height / 2}" r="${shape.width / 2}" fill="${shape.color}" />`;
-      } else if (shape.type === "image") {
-        svgContent += `<image href="${shape.imageSrc}" x="${shape.x}" y="${shape.y}" width="${shape.width}" height="${shape.height}" />`;
+    // Helper: getOffsets logic (copied from Shape class)
+    function getOffsets(tileType, canvasWidth, canvasHeight) {
+      switch(tileType) {
+        case "square":
+          return [
+            { dx: -canvasWidth, dy: 0 },
+            { dx: canvasWidth, dy: 0 },
+            { dx: 0, dy: -canvasHeight },
+            { dx: 0, dy: canvasHeight },
+            { dx: -canvasWidth, dy: -canvasHeight },
+            { dx: canvasWidth, dy: -canvasHeight },
+            { dx: -canvasWidth, dy: canvasHeight },
+            { dx: canvasWidth, dy: canvasHeight },
+          ];
+        case "brick":
+          return [
+            { dx: -canvasWidth, dy: 0 },
+            { dx: canvasWidth, dy: 0 },
+            { dx: -canvasWidth / 2, dy: -canvasHeight },
+            { dx: canvasWidth / 2, dy: -canvasHeight },
+            { dx: -canvasWidth / 2, dy: canvasHeight },
+            { dx: canvasWidth / 2, dy: canvasHeight },
+          ];
+        default:
+          return [{ dx: 0, dy: 0 }];
       }
+    }
+
+    // For image shapes, fetch all image data from IndexedDB first
+    const imageDataUrlMap = {};
+    await Promise.all(
+      shapes.map(async (shape) => {
+        if (shape.type === "image" && shape.imageKey) {
+          if (!imageDataUrlMap[shape.imageKey]) {
+            imageDataUrlMap[shape.imageKey] = await getImageFromIndexedDB(shape.imageKey);
+          }
+        }
+      })
+    );
+
+    shapes.forEach((shape, idx) => {
+      let fillAttr = '';
+      let opacityAttr = shape.opacity !== undefined ? ` opacity=\\\"${shape.opacity}\\\"` : '';
+      // Handle gradient
+      if (shape.gradient && Array.isArray(shape.gradient) && shape.gradient.length > 1) {
+        const gradId = `grad${idx}`;
+        defs += `<linearGradient id=\\\"${gradId}\\\" x1=\\\"0\\\" y1=\\\"0\\\" x2=\\\"1\\\" y2=\\\"1\\\">`;
+        shape.gradient.forEach(stop => {
+          defs += `<stop offset=\\\"${stop.offset * 100}%\\\" stop-color=\\\"${stop.color}\\\"/>`;
+        });
+        defs += `</linearGradient>`;
+        fillAttr = `fill=\\\"url(#${gradId})\\\"`;
+      } else {
+        fillAttr = `fill=\\\"${shape.color}\\\"`;
+      }
+
+      // Always include the original shape at (0,0) offset
+      const allOffsets = [{ dx: 0, dy: 0 }, ...getOffsets(tileType, canvasSize.width, canvasSize.height)];
+      allOffsets.forEach(({ dx, dy }) => {
+        const x = shape.x + dx;
+        const y = shape.y + dy;
+        if (shape.type === "rectangle" || shape.type === "square") {
+          shapeSvgs += `<rect x=\\\"${x - shape.width / 2}\\\" y=\\\"${y - shape.height / 2}\\\" width=\\\"${shape.width}\\\" height=\\\"${shape.height}\\\" ${fillAttr}${opacityAttr} transform=\\\"rotate(${(shape.rotation || 0) * 180 / Math.PI}, ${x}, ${y})\\\"/>`;
+        } else if (shape.type === "circle") {
+          shapeSvgs += `<ellipse cx=\\\"${x}\\\" cy=\\\"${y}\\\" rx=\\\"${shape.width / 2}\\\" ry=\\\"${shape.height / 2}\\\" ${fillAttr}${opacityAttr}/>`;
+        } else if (shape.type === "image") {
+          const dataUrl = shape.imageKey ? imageDataUrlMap[shape.imageKey] : null;
+          if (dataUrl) {
+            shapeSvgs += `<image href=\\\"${dataUrl}\\\" x=\\\"${x - shape.width / 2}\\\" y=\\\"${y - shape.height / 2}\\\" width=\\\"${shape.width}\\\" height=\\\"${shape.height}\\\"${opacityAttr}/>`;
+          }
+        }
+      });
     });
 
+    if (defs) {
+      svgContent += `<defs>${defs}</defs>`;
+    }
+    svgContent += shapeSvgs;
     svgContent += `</svg>`;
 
-    const blob = new Blob([svgContent], { type: "image/svg+xml" });
+    const blob = new Blob([svgContent.replace(/\\\"/g, '"')], { type: "image/svg+xml" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.download = "canvas.svg";
@@ -498,30 +575,8 @@ const Editor = () => {
   };
 
   const generateGridImageWithWorker = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-
-    const contentImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-    const worker = new Worker("/gridWorker.js");
-
-    worker.postMessage({
-      gridCols,
-      gridRows,
-      boxImageData: contentImageData.data,
-      boxWidth: canvas.width,
-      boxHeight: canvas.height,
-    });
-
-    worker.onmessage = function (e) {
-      const { imageUrl } = e.data;
-      setGridImage(URL.createObjectURL(imageUrl));
-    };
-
-    worker.onerror = function (err) {
-      console.error("Worker error:", err.message);
-      alert("Failed to generate grid. Check the console for details.");
-    };
+    setSelectedShape(null);
+    setPendingGrid(true);
   };
 
   const showGrid = () => {
@@ -576,24 +631,15 @@ const Editor = () => {
       type: shape.type,
       rotation: shape.rotation,
       locked: shape.locked,
-      image: shape.type === "image" ? shape.image?.src || null : null,
+      imageKey: shape.type === "image" ? shape.imageKey || null : null,
       opacity: shape.opacity,
       shadow: shape.shadow,
       gradient: shape.gradient,
     }));
 
   const exportShapes = () => {
-    const exportData = {
-      shapes: getSerializableShapes(),
-      canvasSize,
-      tileType,
-    };
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.download = "shapes.flowtile";
-    link.href = url;
-    link.click();
+    setSelectedShape(null);
+    setPendingExport(true);
   };
 
   const importShapes = (e) => {
@@ -604,8 +650,8 @@ const Editor = () => {
       reader.onload = (event) => {
         const importData = JSON.parse(event.target.result);
         if (importData.shapes && Array.isArray(importData.shapes)) {
-          setShapes(
-            importData.shapes.map((data) => {
+          Promise.all(
+            importData.shapes.map(async (data) => {
               const newShape = new Shape(
                 data.x,
                 data.y,
@@ -613,23 +659,25 @@ const Editor = () => {
                 data.height,
                 data.color,
                 data.type,
-                data.image,
+                null,
                 data.opacity,
                 data.shadow,
                 data.gradient
               );
-              // Ensure images are loaded correctly
-              if (data.imageSrc) {
-                const img = new Image();
-                img.src = data.imageSrc;
-                img.onload = () => {
-                  newShape.image = img;
-                  setShapes((prevShapes) => [...prevShapes, newShape]);
-                };
+              newShape.rotation = data.rotation;
+              newShape.locked = data.locked;
+              if (data.type === "image" && data.imageKey) {
+                newShape.imageKey = data.imageKey;
+                const dataUrl = await getImageFromIndexedDB(data.imageKey);
+                if (dataUrl) {
+                  const imgObj = new window.Image();
+                  imgObj.src = dataUrl;
+                  newShape.image = imgObj;
+                }
               }
               return newShape;
             })
-          );
+          ).then((shapesArr) => setShapes(shapesArr));
         }
         if (importData.canvasSize) setCanvasSize(importData.canvasSize);
         if (importData.tileType) setTileType(importData.tileType);
@@ -682,13 +730,26 @@ const Editor = () => {
       const data = loadProjectModel(projectName);
       if (data && Array.isArray(data.shapes)) {
         setCanvasSize(data.canvasSize || { width: 500, height: 500 });
-        setShapes(
-          data.shapes.map(
-            (s) => new Shape(
-              s.x, s.y, s.width, s.height, s.color, s.type, s.image, s.opacity, s.shadow, s.gradient
-            )
-          )
-        );
+        // For image shapes, fetch image from IndexedDB
+        Promise.all(
+          data.shapes.map(async (s) => {
+            const shape = new Shape(
+              s.x, s.y, s.width, s.height, s.color, s.type, null, s.opacity, s.shadow, s.gradient
+            );
+            shape.rotation = s.rotation;
+            shape.locked = s.locked;
+            if (s.type === "image" && s.imageKey) {
+              shape.imageKey = s.imageKey;
+              const dataUrl = await getImageFromIndexedDB(s.imageKey);
+              if (dataUrl) {
+                const imgObj = new window.Image();
+                imgObj.src = dataUrl;
+                shape.image = imgObj;
+              }
+            }
+            return shape;
+          })
+        ).then((shapesArr) => setShapes(shapesArr));
         if (data.tileType) setTileType(data.tileType);
       } else {
         // If no data, reset to blank
@@ -710,6 +771,64 @@ const Editor = () => {
     saveProjectModel(projectName, projectData);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shapes, canvasSize, projectName, tileType]);
+
+  useEffect(() => {
+    // Download Canvas after unselect
+    if (selectedShape === null && pendingDownload) {
+      const format = pendingDownload;
+      setPendingDownload(false);
+      if (format === "svg") {
+        (async () => {
+          await convertCanvasToSVG();
+        })();
+        return;
+      }
+      const canvasEl = canvasRef.current;
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = canvasEl.width;
+      exportCanvas.height = canvasEl.height;
+      const exportCtx = exportCanvas.getContext("2d");
+      exportCtx.drawImage(canvasEl, 0, 0);
+      const link = document.createElement("a");
+      link.download = `canvas.${format}`;
+      link.href = exportCanvas.toDataURL(`image/${format}"`, 1.0);
+      link.click();
+    }
+    // Export Shapes after unselect
+    if (selectedShape === null && pendingExport) {
+      setPendingExport(false);
+      const exportData = {
+        shapes: getSerializableShapes(),
+        canvasSize,
+        tileType,
+      };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = "shapes.flowtile";
+      link.href = url;
+      link.click();
+    }
+    // Generate Grid after unselect
+    if (selectedShape === null && pendingGrid) {
+      setPendingGrid(false);
+      const canvasEl = canvasRef.current;
+      const ctxEl = canvasEl.getContext("2d");
+      const canvasDataEl = ctxEl.getImageData(0, 0, canvasEl.width, canvasEl.height).data;
+      const workerEl = new Worker("/gridWorker.js");
+      workerEl.postMessage({
+        gridCols,
+        gridRows,
+        canvasData: canvasDataEl,
+        canvasWidth: canvasEl.width,
+        canvasHeight: canvasEl.height,
+      });
+      workerEl.onmessage = function (e) {
+        const { imageUrl } = e.data;
+        setGridImage(URL.createObjectURL(imageUrl));
+      };
+    }
+  }, [selectedShape, pendingDownload, pendingExport, pendingGrid]);
 
   return (
     <div ref={parentRef} className="flex flex-col editor" style={{ height: "90vh" }}>
@@ -763,7 +882,6 @@ const Editor = () => {
             >
               <option value="square">Square</option>
               <option value="brick">Brick</option>
-              <option value="hex">Hex</option>
             </select>
             {tileType === "brick" && (
               <>
@@ -838,6 +956,13 @@ const Editor = () => {
                 className="hidden"
               />
             </div>
+            {/* Download Button */}
+            <button
+              className="bg-gray-700 text-white px-4 py-2 rounded mb-2 w-full"
+              onClick={() => setShowDownloadModal(true)}
+            >
+              Download
+            </button>
             {/* Save and Load Project Buttons */}
             <button
               className="bg-yellow-500 text-white px-4 py-2 rounded mb-2 w-full"
@@ -863,6 +988,69 @@ const Editor = () => {
               setShapes={setShapes} // Pass setShapes prop
               duplicateShape={duplicateShape}
             />
+          )}
+
+          {/* Download Settings Modal */}
+          {showDownloadModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(0,0,0,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
+            }}>
+              <div style={{
+                background: 'white',
+                padding: '2rem',
+                borderRadius: '8px',
+                minWidth: '300px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+              }}>
+                <h2 className="text-lg font-semibold mb-4">Download Canvas</h2>
+                <div className="mb-4">
+                  <label className="mr-2">
+                    <input
+                      type="radio"
+                      name="format"
+                      value="svg"
+                      checked={downloadFormat === "svg"}
+                      onChange={() => setDownloadFormat("svg")}
+                    /> SVG
+                  </label>
+                  <label className="ml-4">
+                    <input
+                      type="radio"
+                      name="format"
+                      value="png"
+                      checked={downloadFormat === "png"}
+                      onChange={() => setDownloadFormat("png")}
+                    /> PNG
+                  </label>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+                    onClick={() => setShowDownloadModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    onClick={() => {
+                      setShowDownloadModal(false);
+                      downloadCanvas(downloadFormat);
+                    }}
+                  >
+                    Download
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
