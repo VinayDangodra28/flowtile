@@ -583,19 +583,12 @@ const Editor = () => {
     }));
 
   const exportShapes = () => {
-    const shapesData = shapes.map((shape) => ({
-      x: shape.x,
-      y: shape.y,
-      width: shape.width,
-      height: shape.height,
-      color: shape.color,
-      type: shape.type,
-      rotation: shape.rotation,
-      locked: shape.locked,
-      image: shape.type === "image" ? shape.image?.src || null : null,
-    }));
-
-    const blob = new Blob([JSON.stringify(shapesData, null, 2)], { type: "application/json" });
+    const exportData = {
+      shapes: getSerializableShapes(),
+      canvasSize,
+      tileType,
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.download = "shapes.flowtile";
@@ -609,32 +602,37 @@ const Editor = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        const shapesData = JSON.parse(event.target.result);
-        const newShapes = shapesData.map((data) => {
-          const newShape = new Shape(
-            data.x,
-            data.y,
-            data.width,
-            data.height,
-            data.color,
-            data.type,
-            data.image
+        const importData = JSON.parse(event.target.result);
+        if (importData.shapes && Array.isArray(importData.shapes)) {
+          setShapes(
+            importData.shapes.map((data) => {
+              const newShape = new Shape(
+                data.x,
+                data.y,
+                data.width,
+                data.height,
+                data.color,
+                data.type,
+                data.image,
+                data.opacity,
+                data.shadow,
+                data.gradient
+              );
+              // Ensure images are loaded correctly
+              if (data.imageSrc) {
+                const img = new Image();
+                img.src = data.imageSrc;
+                img.onload = () => {
+                  newShape.image = img;
+                  setShapes((prevShapes) => [...prevShapes, newShape]);
+                };
+              }
+              return newShape;
+            })
           );
-
-          // Ensure images are loaded correctly
-          if (data.imageSrc) {
-            const img = new Image();
-            img.src = data.imageSrc;
-            img.onload = () => {
-              newShape.image = img;
-              setShapes((prevShapes) => [...prevShapes, newShape]);
-            };
-          } else {
-            setShapes((prevShapes) => [...prevShapes, newShape]);
-          }
-
-          return newShape;
-        });
+        }
+        if (importData.canvasSize) setCanvasSize(importData.canvasSize);
+        if (importData.tileType) setTileType(importData.tileType);
       };
       reader.readAsText(file);
     }
@@ -671,6 +669,7 @@ const Editor = () => {
     const projectData = {
       shapes: getSerializableShapes(),
       canvasSize,
+      tileType,
       // Add other relevant state if needed
     };
     saveProjectModel(projectName, projectData);
@@ -690,10 +689,12 @@ const Editor = () => {
             )
           )
         );
+        if (data.tileType) setTileType(data.tileType);
       } else {
         // If no data, reset to blank
         setCanvasSize({ width: 500, height: 500 });
         setShapes([]);
+        setTileType("square");
       }
     }
     // Only run on mount or when projectName changes
@@ -705,10 +706,10 @@ const Editor = () => {
     if (!projectName) return;
     // Only save if shapes or canvasSize are not empty/default
     if (shapes.length === 0 && canvasSize.width === 500 && canvasSize.height === 500) return;
-    const projectData = { shapes: getSerializableShapes(), canvasSize };
+    const projectData = { shapes: getSerializableShapes(), canvasSize, tileType };
     saveProjectModel(projectName, projectData);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shapes, canvasSize, projectName]);
+  }, [shapes, canvasSize, projectName, tileType]);
 
   return (
     <div ref={parentRef} className="flex flex-col editor" style={{ height: "90vh" }}>

@@ -1,5 +1,6 @@
 // components/Navbar/Navbar.js
 import React from "react";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   return (
@@ -11,10 +12,11 @@ const Navbar = () => {
       }}
       >
       <div className="flex items-center">
+      <Link to="/"> 
         <img src="/flowtile.svg" alt="FlowTile Logo" style={{
           height: "5vh",
           width: "5vh",
-        }} />
+        }} /></Link>
         <h1 className="text-2xl font-semibold">FlowTile</h1>
       </div>
       <a
