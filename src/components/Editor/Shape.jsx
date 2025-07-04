@@ -45,12 +45,17 @@ export default class Shape {
     ctx.translate(-this.x, -this.y);
 
     if (this.gradient) {
-      const gradient = ctx.createLinearGradient(
-        this.x - this.width / 2,
-        this.y - this.height / 2,
-        this.x + this.width / 2,
-        this.y + this.height / 2
-      );
+      // Use gradientAngle (degrees) if present, default 45
+      const angle = (typeof this.gradientAngle === 'number' ? this.gradientAngle : 45) * Math.PI / 180;
+      const halfDiag = Math.sqrt(this.width * this.width + this.height * this.height) / 2;
+      const cx = this.x, cy = this.y;
+      const dx = Math.cos(angle) * halfDiag;
+      const dy = Math.sin(angle) * halfDiag;
+      const x1 = cx - dx;
+      const y1 = cy - dy;
+      const x2 = cx + dx;
+      const y2 = cy + dy;
+      const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
       this.gradient.forEach(({ offset, color }) => {
         // Clamp offset to [0, 1] to avoid IndexSizeError
         const safeOffset = Math.max(0, Math.min(1, offset));
@@ -202,12 +207,17 @@ export default class Shape {
       // Gradient fix: create gradient for each repeated shape
       let fillStyle = this.color;
       if (this.gradient) {
-        const gradient = ctx.createLinearGradient(
-          this.x + dx - this.width / 2,
-          this.y + dy - this.height / 2,
-          this.x + dx + this.width / 2,
-          this.y + dy + this.height / 2
-        );
+        // Use gradientAngle (degrees) if present, default 45
+        const angle = (typeof this.gradientAngle === 'number' ? this.gradientAngle : 45) * Math.PI / 180;
+        const halfDiag = Math.sqrt(this.width * this.width + this.height * this.height) / 2;
+        const cx = this.x + dx, cy = this.y + dy;
+        const gdx = Math.cos(angle) * halfDiag;
+        const gdy = Math.sin(angle) * halfDiag;
+        const x1 = cx - gdx;
+        const y1 = cy - gdy;
+        const x2 = cx + gdx;
+        const y2 = cy + gdy;
+        const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
         this.gradient.forEach(({ offset, color }) => {
           // Clamp offset to [0, 1] to avoid IndexSizeError
           const safeOffset = Math.max(0, Math.min(1, offset));

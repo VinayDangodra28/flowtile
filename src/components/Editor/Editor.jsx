@@ -10,6 +10,7 @@ import ArrangeSection from "./ArrangeSection";
 import { GridSection } from "./GridSection";
 import './styles.css'
 import { saveProject as saveProjectModel, loadProject as loadProjectModel, listProjects, saveImageToIndexedDB, getImageFromIndexedDB } from "../../utils/projectModel";
+import { FaUndo, FaRedo, FaFileExport, FaFileImport, FaDownload, FaSave, FaFolderOpen } from "react-icons/fa";
 
 const Editor = () => {
   const { projectName } = useParams();
@@ -40,6 +41,7 @@ const Editor = () => {
   const [pendingGrid, setPendingGrid] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [downloadFormat, setDownloadFormat] = useState("svg");
+  const [canvasBg, setCanvasBg] = useState("transparent");
 
   // Define custom snap lines
   const customSnapLines = [
@@ -89,7 +91,36 @@ const Editor = () => {
     const ctx = canvas.getContext("2d");
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Draw canvas background
+      if (canvasBg === 'transparent') {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      } else if (typeof canvasBg === 'string') {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.fillStyle = canvasBg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      } else if (canvasBg && typeof canvasBg === 'object' && canvasBg.type === 'gradient') {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Use angle and stops from canvasBg
+        const angle = (typeof canvasBg.gradientAngle === 'number' ? canvasBg.gradientAngle : 45) * Math.PI / 180;
+        const halfDiag = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height) / 2;
+        const cx = canvas.width / 2, cy = canvas.height / 2;
+        const dx = Math.cos(angle) * halfDiag;
+        const dy = Math.sin(angle) * halfDiag;
+        const x1 = cx - dx;
+        const y1 = cy - dy;
+        const x2 = cx + dx;
+        const y2 = cy + dy;
+        const grad = ctx.createLinearGradient(x1, y1, x2, y2);
+        (canvasBg.gradient || []).forEach(({ offset, color }) => {
+          grad.addColorStop(Math.max(0, Math.min(1, offset)), color);
+        });
+        ctx.save();
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
 
       // Draw snap lines only if snapping
       if (isSnapping) {
@@ -449,6 +480,35 @@ const Editor = () => {
     let svgContent = `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"${canvasSize.width}\" height=\"${canvasSize.height}\">`;
     let defs = '';
     let shapeSvgs = '';
+    let shadowDefs = '';
+    const shadowIdMap = {}; // To avoid duplicate filters
+    let shadowCount = 0;
+
+    // --- SVG Background (canvasBg) ---
+    let bgRect = '';
+    if (canvasBg && typeof canvasBg === 'object' && canvasBg.type === 'gradient') {
+      // SVG gradient background
+      const gradId = 'canvasBgGrad';
+      const angle = (typeof canvasBg.gradientAngle === 'number' ? canvasBg.gradientAngle : 45) * Math.PI / 180;
+      const halfDiag = Math.sqrt(canvasSize.width * canvasSize.width + canvasSize.height * canvasSize.height) / 2;
+      const cx = canvasSize.width / 2, cy = canvasSize.height / 2;
+      const dx = Math.cos(angle) * halfDiag;
+      const dy = Math.sin(angle) * halfDiag;
+      // SVG uses 0-1 for x1/y1/x2/y2, so normalize to canvas bounds
+      const x1 = 0.5 - dx / canvasSize.width;
+      const y1 = 0.5 - dy / canvasSize.height;
+      const x2 = 0.5 + dx / canvasSize.width;
+      const y2 = 0.5 + dy / canvasSize.height;
+      defs += `<linearGradient id=\"${gradId}\" x1=\"${x1}\" y1=\"${y1}\" x2=\"${x2}\" y2=\"${y2}\">`;
+      (canvasBg.gradient || []).forEach(stop => {
+        defs += `<stop offset=\"${stop.offset * 100}%\" stop-color=\"${stop.color}\"/>`;
+      });
+      defs += `</linearGradient>`;
+      bgRect = `<rect x=\"0\" y=\"0\" width=\"${canvasSize.width}\" height=\"${canvasSize.height}\" fill=\"url(#${gradId})\"/>`;
+    } else if (canvasBg && typeof canvasBg === 'string' && canvasBg !== 'transparent') {
+      // Solid color background
+      bgRect = `<rect x=\"0\" y=\"0\" width=\"${canvasSize.width}\" height=\"${canvasSize.height}\" fill=\"${canvasBg}\"/>`;
+    }
 
     // Helper: getOffsets logic (copied from Shape class)
     function getOffsets(tileType, canvasWidth, canvasHeight) {
@@ -496,7 +556,18 @@ const Editor = () => {
       // Handle gradient
       if (shape.gradient && Array.isArray(shape.gradient) && shape.gradient.length > 1) {
         const gradId = `grad${idx}`;
-        defs += `<linearGradient id=\\\"${gradId}\\\" x1=\\\"0\\\" y1=\\\"0\\\" x2=\\\"1\\\" y2=\\\"1\\\">`;
+        // Calculate gradient vector based on angle and shape size
+        const angle = (typeof shape.gradientAngle === 'number' ? shape.gradientAngle : 45) * Math.PI / 180;
+        const halfDiag = Math.sqrt(shape.width * shape.width + shape.height * shape.height) / 2;
+        const cx = shape.x, cy = shape.y;
+        const dx = Math.cos(angle) * halfDiag;
+        const dy = Math.sin(angle) * halfDiag;
+        // SVG uses 0-1 for x1/y1/x2/y2, so normalize to shape bounds
+        const x1 = 0.5 - dx / shape.width;
+        const y1 = 0.5 - dy / shape.height;
+        const x2 = 0.5 + dx / shape.width;
+        const y2 = 0.5 + dy / shape.height;
+        defs += `<linearGradient id=\\\"${gradId}\\\" x1=\\\"${x1}\\\" y1=\\\"${y1}\\\" x2=\\\"${x2}\\\" y2=\\\"${y2}\\\">`;
         shape.gradient.forEach(stop => {
           defs += `<stop offset=\\\"${stop.offset * 100}%\\\" stop-color=\\\"${stop.color}\\\"/>`;
         });
@@ -506,27 +577,75 @@ const Editor = () => {
         fillAttr = `fill=\\\"${shape.color}\\\"`;
       }
 
+      let filterAttr = '';
+      if (shape.shadow) {
+        // Create a unique filter for each unique shadow
+        const key = JSON.stringify(shape.shadow);
+        if (!shadowIdMap[key]) {
+          const shadowId = `shadow${shadowCount++}`;
+          shadowIdMap[key] = shadowId;
+          // Parse color and opacity
+          let color = shape.shadow.color || "#000";
+          let opacity = 1;
+          if (color.startsWith("rgba")) {
+            const match = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+            if (match) {
+              color = `rgb(${match[1]},${match[2]},${match[3]})`;
+              opacity = match[4];
+            }
+          }
+          shadowDefs += `
+            <filter id="${shadowId}" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="${shape.shadow.offsetX || 0}" dy="${shape.shadow.offsetY || 0}" stdDeviation="${(shape.shadow.blur || 0) / 2}" flood-color="${color}" flood-opacity="${opacity}"/>
+            </filter>
+          `;
+        }
+        filterAttr = `filter="url(#${shadowIdMap[key]})"`;
+      }
+
       // Always include the original shape at (0,0) offset
       const allOffsets = [{ dx: 0, dy: 0 }, ...getOffsets(tileType, canvasSize.width, canvasSize.height)];
       allOffsets.forEach(({ dx, dy }) => {
         const x = shape.x + dx;
         const y = shape.y + dy;
         if (shape.type === "rectangle" || shape.type === "square") {
-          shapeSvgs += `<rect x=\\\"${x - shape.width / 2}\\\" y=\\\"${y - shape.height / 2}\\\" width=\\\"${shape.width}\\\" height=\\\"${shape.height}\\\" ${fillAttr}${opacityAttr} transform=\\\"rotate(${(shape.rotation || 0) * 180 / Math.PI}, ${x}, ${y})\\\"/>`;
+          shapeSvgs += `<rect x=\\\"${x - shape.width / 2}\\\" y=\\\"${y - shape.height / 2}\\\" width=\\\"${shape.width}\\\" height=\\\"${shape.height}\\\" ${fillAttr}${opacityAttr} ${filterAttr} transform=\\\"rotate(${(shape.rotation || 0) * 180 / Math.PI}, ${x}, ${y})\\\"/>`;
         } else if (shape.type === "circle") {
-          shapeSvgs += `<ellipse cx=\\\"${x}\\\" cy=\\\"${y}\\\" rx=\\\"${shape.width / 2}\\\" ry=\\\"${shape.height / 2}\\\" ${fillAttr}${opacityAttr}/>`;
+          shapeSvgs += `<ellipse cx=\\\"${x}\\\" cy=\\\"${y}\\\" rx=\\\"${shape.width / 2}\\\" ry=\\\"${shape.height / 2}\\\" ${fillAttr}${opacityAttr} ${filterAttr}/>`;
         } else if (shape.type === "image") {
           const dataUrl = shape.imageKey ? imageDataUrlMap[shape.imageKey] : null;
           if (dataUrl) {
-            shapeSvgs += `<image href=\\\"${dataUrl}\\\" x=\\\"${x - shape.width / 2}\\\" y=\\\"${y - shape.height / 2}\\\" width=\\\"${shape.width}\\\" height=\\\"${shape.height}\\\"${opacityAttr}/>`;
+            shapeSvgs += `<image href=\\\"${dataUrl}\\\" x=\\\"${x - shape.width / 2}\\\" y=\\\"${y - shape.height / 2}\\\" width=\\\"${shape.width}\\\" height=\\\"${shape.height}\\\"${opacityAttr} ${filterAttr}/>`;
           }
+        } else if (shape.type === "triangle") {
+          // Calculate triangle points
+          const angle = shape.rotation || 0;
+          const hw = shape.width / 2;
+          const hh = shape.height / 2;
+          // Equilateral triangle centered at (x, y)
+          const points = [
+            { x: x, y: y - hh }, // Top
+            { x: x - hw, y: y + hh }, // Bottom left
+            { x: x + hw, y: y + hh }, // Bottom right
+          ].map(pt => {
+            // Apply rotation
+            const dx = pt.x - x;
+            const dy = pt.y - y;
+            return {
+              x: x + dx * Math.cos(angle) - dy * Math.sin(angle),
+              y: y + dx * Math.sin(angle) + dy * Math.cos(angle),
+            };
+          });
+          const pointsAttr = points.map(pt => `${pt.x},${pt.y}`).join(' ');
+          shapeSvgs += `<polygon points=\\\"${pointsAttr}\\\" ${fillAttr}${opacityAttr} ${filterAttr}/>`;
         }
       });
     });
 
-    if (defs) {
-      svgContent += `<defs>${defs}</defs>`;
+    if (defs || shadowDefs) {
+      svgContent += `<defs>${defs}${shadowDefs}</defs>`;
     }
+    if (bgRect) svgContent += bgRect;
     svgContent += shapeSvgs;
     svgContent += `</svg>`;
 
@@ -681,6 +800,7 @@ const Editor = () => {
         }
         if (importData.canvasSize) setCanvasSize(importData.canvasSize);
         if (importData.tileType) setTileType(importData.tileType);
+        if (importData.canvasBg !== undefined) setCanvasBg(importData.canvasBg);
       };
       reader.readAsText(file);
     }
@@ -718,6 +838,7 @@ const Editor = () => {
       shapes: getSerializableShapes(),
       canvasSize,
       tileType,
+      canvasBg,
       // Add other relevant state if needed
     };
     saveProjectModel(projectName, projectData);
@@ -751,11 +872,13 @@ const Editor = () => {
           })
         ).then((shapesArr) => setShapes(shapesArr));
         if (data.tileType) setTileType(data.tileType);
+        if (data.canvasBg !== undefined) setCanvasBg(data.canvasBg);
       } else {
         // If no data, reset to blank
         setCanvasSize({ width: 500, height: 500 });
         setShapes([]);
         setTileType("square");
+        setCanvasBg("transparent");
       }
     }
     // Only run on mount or when projectName changes
@@ -767,10 +890,10 @@ const Editor = () => {
     if (!projectName) return;
     // Only save if shapes or canvasSize are not empty/default
     if (shapes.length === 0 && canvasSize.width === 500 && canvasSize.height === 500) return;
-    const projectData = { shapes: getSerializableShapes(), canvasSize, tileType };
+    const projectData = { shapes: getSerializableShapes(), canvasSize, tileType, canvasBg };
     saveProjectModel(projectName, projectData);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shapes, canvasSize, projectName, tileType]);
+  }, [shapes, canvasSize, projectName, tileType, canvasBg]);
 
   useEffect(() => {
     // Download Canvas after unselect
@@ -801,6 +924,7 @@ const Editor = () => {
         shapes: getSerializableShapes(),
         canvasSize,
         tileType,
+        canvasBg,
       };
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -830,9 +954,20 @@ const Editor = () => {
     }
   }, [selectedShape, pendingDownload, pendingExport, pendingGrid]);
 
+  // Move shape from fromIndex to toIndex
+  const handleReorderShapes = (fromIndex, toIndex) => {
+    if (fromIndex === toIndex) return;
+    setShapes(prevShapes => {
+      const updated = [...prevShapes];
+      const [moved] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, moved);
+      return updated;
+    });
+  };
+
   return (
     <div ref={parentRef} className="flex flex-col editor" style={{ height: "90vh" }}>
-      <div className="flex flex-1">
+      <div className="flex flex-1" style={{ height: "calc(90vh - 70px)" }}>
         {/* Sidebar */}
         <div className="w-3/10 bg-gray-200 flex flex-row justify-between gap-1 z-10">
           <div></div>
@@ -847,9 +982,7 @@ const Editor = () => {
                   <ShapeList
                     shapes={shapes}
                     onSelectShape={setSelectedShape}
-                    onDragStart={handleDragStart}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
+                    onReorder={handleReorderShapes}
                     onLockShape={handleLockShape}
                   />
                 </div>
@@ -908,152 +1041,178 @@ const Editor = () => {
             onMouseUp={handleMouseUp}
           ></canvas>
         </div>
-        {/* Tools Section */}
-        <div className="w-2/10 bg-gray-200 p-4 flex flex-col"
-        style={{
-          height: "90vh",
-        }}
+        {/* Tools Section (Sidebar) */}
+        <div className="w-3/10 bg-gray-200 p-4 pr-0 pb-0 pt-0 flex flex-col"
+          style={{
+            height: "100%",
+          }}
         >
-          <div className="mb-4 flex flex-col space-x-2">
-            <div className="flex space-x-2 mb-2 items-center">
-              <button
-                onClick={handleUndo}
-                className="w-1/2 px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 transition"
-                disabled={undoStack.length === 0}
-              >
-                Undo
-              </button>
-              <button
-                onClick={handleRedo}
-                className="w-1/2 px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 transition"
-                disabled={redoStack.length === 0}
-              >
-                Redo
-              </button>
-            </div>
-            <div className="flex space-x-2 mb-2 items-center">
-              <button
-                onClick={exportShapes}
-                className="w-1/2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
-              >
-                Export
-              </button>
-
-              {/* Label styled like a button to trigger the input */}
-              <label
-                htmlFor="upload-input"
-                className="flex items-center justify-center text-center w-1/2 cursor-pointer px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition"
-              >
-                Import
-              </label>
-
-              {/* Hidden file input */}
-              <input
-                type="file"
-                accept=".flowtile"
-                onChange={importShapes}
-                id="upload-input"
-                className="hidden"
-              />
-            </div>
-            {/* Download Button */}
-            <button
-              className="bg-gray-700 text-white px-4 py-2 rounded mb-2 w-full"
-              onClick={() => setShowDownloadModal(true)}
-            >
-              Download
-            </button>
-            {/* Save and Load Project Buttons */}
-            <button
-              className="bg-yellow-500 text-white px-4 py-2 rounded mb-2 w-full"
-              onClick={saveProject}
-            >
-              Save Project
-            </button>
-            <button
-              className="bg-blue-500 text-white px-4 py-2 rounded mb-2 w-full"
-              onClick={() => alert('Load Project logic goes here!')}
-            >
-              Load Project
-            </button>
-          </div>
-
-          {selectedShape && (
+          {selectedShape ? (
             <ArrangeSection
               selectedShape={selectedShape}
               moveShapeUp={moveShapeUp}
               moveShapeDown={moveShapeDown}
               deleteShape={deleteShape}
-              shapes={shapes} // Pass shapes prop
-              setShapes={setShapes} // Pass setShapes prop
+              shapes={shapes}
+              setShapes={setShapes}
               duplicateShape={duplicateShape}
+              canvasSize={canvasSize}
+              setSelectedShape={setSelectedShape}
+              canvasBg={canvasBg}
+              setCanvasBg={setCanvasBg}
             />
-          )}
-
-          {/* Download Settings Modal */}
-          {showDownloadModal && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100vw',
-              height: '100vh',
-              background: 'rgba(0,0,0,0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000
-            }}>
-              <div style={{
-                background: 'white',
-                padding: '2rem',
-                borderRadius: '8px',
-                minWidth: '300px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-              }}>
-                <h2 className="text-lg font-semibold mb-4">Download Canvas</h2>
-                <div className="mb-4">
-                  <label className="mr-2">
-                    <input
-                      type="radio"
-                      name="format"
-                      value="svg"
-                      checked={downloadFormat === "svg"}
-                      onChange={() => setDownloadFormat("svg")}
-                    /> SVG
-                  </label>
-                  <label className="ml-4">
-                    <input
-                      type="radio"
-                      name="format"
-                      value="png"
-                      checked={downloadFormat === "png"}
-                      onChange={() => setDownloadFormat("png")}
-                    /> PNG
-                  </label>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <button
-                    className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-                    onClick={() => setShowDownloadModal(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                    onClick={() => {
-                      setShowDownloadModal(false);
-                      downloadCanvas(downloadFormat);
-                    }}
-                  >
-                    Download
-                  </button>
-                </div>
-              </div>
-            </div>
+          ) : (
+            <ArrangeSection
+              selectedShape={null}
+              canvasBg={canvasBg}
+              setCanvasBg={setCanvasBg}
+              canvasSize={canvasSize}
+              setSelectedShape={setSelectedShape}
+            />
           )}
         </div>
       </div>
+      {/* Bottom Tools Strip - align with main editor content */}
+      <div className="flex justify-center w-full bg-transparent">
+        <div
+          className="bg-white border-t border-gray-300 shadow-lg z-50 flex flex-row items-center justify-center gap-8 py-3 rounded-b-2xl bottom-toolbar"
+          style={{ minHeight: 64, width: '80%', maxWidth: 1200 }}
+        >
+          {/* Undo/Redo Group */}
+          <div className="flex gap-2 items-center group-undo-redo">
+            <button
+              onClick={handleUndo}
+              className="toolbar-btn bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-2 focus:ring-blue-300"
+              disabled={undoStack.length === 0}
+              title="Undo (Ctrl+Z)"
+              aria-label="Undo"
+            >
+              <FaUndo className="inline mr-1" /> Undo
+            </button>
+            <button
+              onClick={handleRedo}
+              className="toolbar-btn bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-2 focus:ring-blue-300"
+              disabled={redoStack.length === 0}
+              title="Redo (Ctrl+Y)"
+              aria-label="Redo"
+            >
+              <FaRedo className="inline mr-1" /> Redo
+            </button>
+          </div>
+          {/* Import/Export Group */}
+          <div className="flex gap-2 items-center group-import-export">
+            <button
+              onClick={exportShapes}
+              className="toolbar-btn bg-green-100 text-green-800 hover:bg-green-200 focus:ring-2 focus:ring-green-400"
+              title="Export Shapes"
+              aria-label="Export"
+            >
+              <FaFileExport className="inline mr-1" /> Export
+            </button>
+            <label
+              htmlFor="upload-input"
+              className="toolbar-btn bg-purple-100 text-purple-800 hover:bg-purple-200 focus:ring-2 focus:ring-purple-400 cursor-pointer flex items-center"
+              title="Import Shapes"
+              aria-label="Import"
+              style={{ marginBottom: 0 }}
+            >
+              <FaFileImport className="inline mr-1" /> Import
+            </label>
+            <input
+              type="file"
+              accept=".flowtile"
+              onChange={importShapes}
+              id="upload-input"
+              className="hidden"
+            />
+          </div>
+          {/* Download/Save/Load Group */}
+          <div className="flex gap-2 items-center group-download-save">
+            <button
+              className="toolbar-btn bg-blue-100 text-blue-800 hover:bg-blue-200 focus:ring-2 focus:ring-blue-400"
+              onClick={() => setShowDownloadModal(true)}
+              title="Download Canvas"
+              aria-label="Download"
+            >
+              <FaDownload className="inline mr-1" /> Download
+            </button>
+            <button
+              className="toolbar-btn bg-yellow-100 text-yellow-800 hover:bg-yellow-200 focus:ring-2 focus:ring-yellow-400"
+              onClick={saveProject}
+              title="Save Project"
+              aria-label="Save"
+            >
+              <FaSave className="inline mr-1" /> Save
+            </button>
+            <button
+              className="toolbar-btn bg-indigo-100 text-indigo-800 hover:bg-indigo-200 focus:ring-2 focus:ring-indigo-400"
+              onClick={() => alert('Load Project logic goes here!')}
+              title="Load Project"
+              aria-label="Load"
+            >
+              <FaFolderOpen className="inline mr-1" /> Load
+            </button>
+          </div>
+        </div>
+      </div>
+      {/* Download Settings Modal */}
+      {showDownloadModal && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <button
+              className="modal-close-btn"
+              aria-label="Close download modal"
+              onClick={() => setShowDownloadModal(false)}
+            >
+              ×
+            </button>
+            <h2 className="modal-title">Download Canvas</h2>
+            <div className="modal-options">
+              <label className={`modal-radio-label${downloadFormat === "svg" ? " selected" : ""}`}> 
+                <input
+                  type="radio"
+                  name="format"
+                  value="svg"
+                  checked={downloadFormat === "svg"}
+                  onChange={() => setDownloadFormat("svg")}
+                  aria-label="SVG format"
+                />
+                <span className="modal-radio-icon">🖼️</span> SVG
+              </label>
+              <label className={`modal-radio-label${downloadFormat === "png" ? " selected" : ""}`}> 
+                <input
+                  type="radio"
+                  name="format"
+                  value="png"
+                  checked={downloadFormat === "png"}
+                  onChange={() => setDownloadFormat("png")}
+                  aria-label="PNG format"
+                />
+                <span className="modal-radio-icon">📄</span> PNG
+              </label>
+            </div>
+            <div className="modal-actions">
+              <button
+                className="modal-btn cancel"
+                onClick={() => setShowDownloadModal(false)}
+                aria-label="Cancel download"
+              >
+                Cancel
+              </button>
+              <button
+                className="modal-btn confirm"
+                onClick={() => {
+                  setShowDownloadModal(false);
+                  downloadCanvas(downloadFormat);
+                }}
+                aria-label="Confirm download"
+              >
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
