@@ -1079,7 +1079,7 @@ const Editor = () => {
         {/* Canvas Section */}
         <div className="w-5/10 flex flex-col items-center p-4">
           {/* Tile Type Selector */}
-          <div className="flex flex-col items-center gap-2 mb-4">
+          <div className="flex flex items-center gap-2 mb-2">
             <span className="text-sm font-medium text-gray-700">Tile Type</span>
             <div className="flex items-center bg-gray-200 rounded-full p-1">
               <button
