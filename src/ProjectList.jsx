@@ -164,13 +164,7 @@ const ProjectList = () => {
             {project.name}
           </h3>
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <button
-              onClick={(e) => handleRegenerateThumbnail(project.name, e)}
-              className="p-1 hover:bg-blue-50 rounded text-blue-500 hover:text-blue-600"
-              title="Regenerate thumbnail"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
+            
             <button
               onClick={(e) => handleDelete(project.name, e)}
               className="p-1 hover:bg-red-50 rounded text-red-500 hover:text-red-600"
@@ -285,24 +279,7 @@ const ProjectList = () => {
               <p className="text-gray-600 mt-1">Create and manage your FlowTile designs</p>
             </div>
             <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  // Add test thumbnails to all projects
-                  projects.forEach(project => {
-                    const currentData = loadProjectModel(project.name);
-                    if (currentData && !project.thumbnail) {
-                      const testThumbnail = createTestThumbnail();
-                      saveProjectModel(project.name, currentData, testThumbnail);
-                    }
-                  });
-                  setProjects(listProjects());
-                  console.log('Added test thumbnails to all projects');
-                }}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 shadow-sm"
-              >
-                <RefreshCw className="w-5 h-5" />
-                Add Test Thumbnails
-              </button>
+              
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 shadow-sm"
