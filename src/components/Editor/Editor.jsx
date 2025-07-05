@@ -36,6 +36,9 @@ const Editor = () => {
   const [lastAction, setLastAction] = useState(null); // Track last action type
   const [tileType, setTileType] = useState("square");
   const [brickOffset, setBrickOffset] = useState(50); // for brick offset
+  const [borderEnabled, setBorderEnabled] = useState(false);
+  const [borderWidth, setBorderWidth] = useState(2);
+  const [borderColor, setBorderColor] = useState("#000000");
   const [pendingDownload, setPendingDownload] = useState(false);
   const [pendingExport, setPendingExport] = useState(false);
   const [pendingGrid, setPendingGrid] = useState(false);
@@ -160,45 +163,87 @@ const Editor = () => {
     draw();
   }, [shapes, selectedShape, snapLines, dragging, isSnapping]);
 
+  // Helper to serialize shapes for undo/redo
+  const serializeShapes = (shapesArray) => {
+    return shapesArray.map(shape => ({
+      x: shape.x,
+      y: shape.y,
+      width: shape.width,
+      height: shape.height,
+      color: shape.color,
+      type: shape.type,
+      rotation: shape.rotation,
+      opacity: shape.opacity,
+      shadow: shape.shadow,
+      gradient: shape.gradient,
+      gradientAngle: shape.gradientAngle,
+      locked: shape.locked,
+      imageKey: shape.imageKey,
+    }));
+  };
+
+  // Helper to deserialize shapes from undo/redo
+  const deserializeShapes = (serializedShapes) => {
+    return serializedShapes.map(data => {
+      const shape = new Shape(
+        data.x, data.y, data.width, data.height, data.color, data.type, null, data.opacity, data.shadow, data.gradient
+      );
+      // Restore all additional properties
+      shape.rotation = data.rotation || 0;
+      shape.gradientAngle = data.gradientAngle;
+      shape.locked = data.locked || false;
+      shape.imageKey = data.imageKey;
+      
+      // Restore image if it exists
+      if (data.type === "image" && data.imageKey) {
+        getImageFromIndexedDB(data.imageKey).then((dataUrl) => {
+          if (dataUrl) {
+            const imgObj = new window.Image();
+            imgObj.src = dataUrl;
+            shape.image = imgObj;
+          }
+        });
+      }
+      
+      return shape;
+    });
+  };
+
   // Helper to push current shapes to undo stack
   const pushToUndoStack = () => {
-    setUndoStack((prev) => [...prev, JSON.stringify(shapes)]);
+    setUndoStack((prev) => [...prev, JSON.stringify(serializeShapes(shapes))]);
     setRedoStack([]); // Clear redo stack on new action
   };
 
   // Undo function
   const handleUndo = () => {
     if (undoStack.length === 0) return;
-    setRedoStack((prev) => [...prev, JSON.stringify(shapes)]);
+    setRedoStack((prev) => [...prev, JSON.stringify(serializeShapes(shapes))]);
     const prevShapes = JSON.parse(undoStack[undoStack.length - 1]);
-    setShapes(prevShapes.map((data) => new Shape(
-      data.x, data.y, data.width, data.height, data.color, data.type, data.image, data.opacity, data.shadow, data.gradient
-    )));
+    setShapes(deserializeShapes(prevShapes));
     setUndoStack((prev) => prev.slice(0, -1));
   };
 
   // Redo function
   const handleRedo = () => {
     if (redoStack.length === 0) return;
-    setUndoStack((prev) => [...prev, JSON.stringify(shapes)]);
+    setUndoStack((prev) => [...prev, JSON.stringify(serializeShapes(shapes))]);
     const nextShapes = JSON.parse(redoStack[redoStack.length - 1]);
-    setShapes(nextShapes.map((data) => new Shape(
-      data.x, data.y, data.width, data.height, data.color, data.type, data.image, data.opacity, data.shadow, data.gradient
-    )));
+    setShapes(deserializeShapes(nextShapes));
     setRedoStack((prev) => prev.slice(0, -1));
   };
 
   const handleMouseDown = (e) => {
-    if (selectedShape && selectedShape.locked) return;
-
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    // Check for resize handle click first
     if (selectedShape && selectedShape.isResizeHandleClicked(x, y)) {
+      if (selectedShape.locked) return; // Prevent resizing locked shapes
       setResizing(true);
       setLastAction('resize');
-      setPrevShapeState(JSON.stringify(shapes));
+      setPrevShapeState(JSON.stringify(serializeShapes(shapes)));
       return;
     }
 
@@ -206,13 +251,17 @@ const Editor = () => {
     setSelectedShape(clickedShape);
 
     if (clickedShape) {
+      if (clickedShape.locked) {
+        // Allow selection but prevent dragging of locked shapes
+        return;
+      }
       setDragging(true);
       setLastAction('move');
       clickedShape.offset = {
         x: x - clickedShape.x,
         y: y - clickedShape.y,
       };
-      setPrevShapeState(JSON.stringify(shapes));
+      setPrevShapeState(JSON.stringify(serializeShapes(shapes)));
     }
   };
 
@@ -223,7 +272,7 @@ const Editor = () => {
     const isShiftPressed = e.shiftKey;
 
     // --- Resize ---
-    if (resizing && selectedShape) {
+    if (resizing && selectedShape && !selectedShape.locked) {
       const dx = x - selectedShape.x;
       const dy = y - selectedShape.y;
       const aspectRatio = selectedShape.width / selectedShape.height;
@@ -245,13 +294,13 @@ const Editor = () => {
       if (lastAction === 'resize') {
         setUndoStack((prev) => [...prev, prevShapeState]);
         setRedoStack([]);
-        setPrevShapeState(JSON.stringify(shapes));
+        setPrevShapeState(JSON.stringify(serializeShapes(shapes)));
         setLastAction(null); // Only once per resize session
       }
     }
 
     // --- Rotate ---
-    if (rotating && selectedShape) {
+    if (rotating && selectedShape && !selectedShape.locked) {
       const dx = x - selectedShape.x;
       const dy = y - selectedShape.y;
       selectedShape.rotation = Math.atan2(dy, dx);
@@ -261,7 +310,7 @@ const Editor = () => {
     const snapThreshold = 8;
     let isSnappingLocal = false; // Local snapping state
 
-    if (dragging && selectedShape) {
+    if (dragging && selectedShape && !selectedShape.locked) {
       let newX = x - selectedShape.offset.x;
       let newY = y - selectedShape.offset.y;
 
@@ -314,7 +363,7 @@ const Editor = () => {
       if (lastAction === 'move') {
         setUndoStack((prev) => [...prev, prevShapeState]);
         setRedoStack([]);
-        setPrevShapeState(JSON.stringify(shapes));
+        setPrevShapeState(JSON.stringify(serializeShapes(shapes)));
         setLastAction(null); // Only once per move session
       }
     }
@@ -698,9 +747,23 @@ const Editor = () => {
     setPendingGrid(true);
   };
 
+  const downloadGrid = () => {
+    if (!gridImage) {
+      alert("No grid generated yet. Please generate a grid first.");
+      return;
+    }
+    
+    // Create a temporary link to download the image
+    const link = document.createElement("a");
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    link.download = `grid-${gridCols}x${gridRows}-${timestamp}.png`;
+    link.href = gridImage;
+    link.click();
+  };
+
   const showGrid = () => {
     return gridImage ? (
-      <div className="flex justify-center mt-4">
+      <div className="flex justify-center">
         <img
           src={gridImage}
           alt="Generated Grid"
@@ -740,21 +803,7 @@ const Editor = () => {
   };
 
   // Helper to get serializable shapes for saving/export
-  const getSerializableShapes = () =>
-    shapes.map((shape) => ({
-      x: shape.x,
-      y: shape.y,
-      width: shape.width,
-      height: shape.height,
-      color: shape.color,
-      type: shape.type,
-      rotation: shape.rotation,
-      locked: shape.locked,
-      imageKey: shape.type === "image" ? shape.imageKey || null : null,
-      opacity: shape.opacity,
-      shadow: shape.shadow,
-      gradient: shape.gradient,
-    }));
+  const getSerializableShapes = () => serializeShapes(shapes);
 
   const exportShapes = () => {
     setSelectedShape(null);
@@ -769,34 +818,7 @@ const Editor = () => {
       reader.onload = (event) => {
         const importData = JSON.parse(event.target.result);
         if (importData.shapes && Array.isArray(importData.shapes)) {
-          Promise.all(
-            importData.shapes.map(async (data) => {
-              const newShape = new Shape(
-                data.x,
-                data.y,
-                data.width,
-                data.height,
-                data.color,
-                data.type,
-                null,
-                data.opacity,
-                data.shadow,
-                data.gradient
-              );
-              newShape.rotation = data.rotation;
-              newShape.locked = data.locked;
-              if (data.type === "image" && data.imageKey) {
-                newShape.imageKey = data.imageKey;
-                const dataUrl = await getImageFromIndexedDB(data.imageKey);
-                if (dataUrl) {
-                  const imgObj = new window.Image();
-                  imgObj.src = dataUrl;
-                  newShape.image = imgObj;
-                }
-              }
-              return newShape;
-            })
-          ).then((shapesArr) => setShapes(shapesArr));
+          setShapes(deserializeShapes(importData.shapes));
         }
         if (importData.canvasSize) setCanvasSize(importData.canvasSize);
         if (importData.tileType) setTileType(importData.tileType);
@@ -851,26 +873,7 @@ const Editor = () => {
       const data = loadProjectModel(projectName);
       if (data && Array.isArray(data.shapes)) {
         setCanvasSize(data.canvasSize || { width: 500, height: 500 });
-        // For image shapes, fetch image from IndexedDB
-        Promise.all(
-          data.shapes.map(async (s) => {
-            const shape = new Shape(
-              s.x, s.y, s.width, s.height, s.color, s.type, null, s.opacity, s.shadow, s.gradient
-            );
-            shape.rotation = s.rotation;
-            shape.locked = s.locked;
-            if (s.type === "image" && s.imageKey) {
-              shape.imageKey = s.imageKey;
-              const dataUrl = await getImageFromIndexedDB(s.imageKey);
-              if (dataUrl) {
-                const imgObj = new window.Image();
-                imgObj.src = dataUrl;
-                shape.image = imgObj;
-              }
-            }
-            return shape;
-          })
-        ).then((shapesArr) => setShapes(shapesArr));
+        setShapes(deserializeShapes(data.shapes));
         if (data.tileType) setTileType(data.tileType);
         if (data.canvasBg !== undefined) setCanvasBg(data.canvasBg);
       } else {
@@ -946,13 +949,17 @@ const Editor = () => {
         canvasData: canvasDataEl,
         canvasWidth: canvasEl.width,
         canvasHeight: canvasEl.height,
+        tileType,
+        borderEnabled,
+        borderWidth,
+        borderColor,
       });
       workerEl.onmessage = function (e) {
         const { imageUrl } = e.data;
         setGridImage(URL.createObjectURL(imageUrl));
       };
     }
-  }, [selectedShape, pendingDownload, pendingExport, pendingGrid]);
+  }, [selectedShape, pendingDownload, pendingExport, pendingGrid, gridCols, gridRows, tileType, borderEnabled, borderWidth, borderColor]);
 
   // Move shape from fromIndex to toIndex
   const handleReorderShapes = (fromIndex, toIndex) => {
@@ -968,67 +975,58 @@ const Editor = () => {
   return (
     <div ref={parentRef} className="flex flex-col editor" style={{ height: "90vh" }}>
       <div className="flex flex-1" style={{ height: "calc(90vh - 70px)" }}>
-        {/* Sidebar */}
-        <div className="w-3/10 bg-gray-200 flex flex-row justify-between gap-1 z-10">
-          <div></div>
-          <Sidebar onSectionClick={setActiveSection} />
-          <div className="w-3/4 p-2">
-            {activeSection === "elements" && <ElementsSection addShape={addShape} handleImageUpload={handleImageUpload} />}
-            {/* {activeSection === "images" && <ImagesSection handleImageUpload={handleImageUpload} />} */}
-            {activeSection === "shapes" && (
-              <div>
-                <div className="mt-4">
-                  <h2 className="text-xl font-semibold mb-2">Shape List</h2>
-                  <ShapeList
-                    shapes={shapes}
-                    onSelectShape={setSelectedShape}
-                    onReorder={handleReorderShapes}
-                    onLockShape={handleLockShape}
-                  />
-                </div>
-
-              </div>
-            )}
-            {activeSection === "canvas" && (
-              <div>
-                <CanvasSection canvasSize={canvasSize} updateCanvasSize={updateCanvasSize} downloadCanvas={downloadCanvas} />
-              </div>
-            )}
-            {activeSection === "grid" && (
-              <div>
-                <GridSection setGridCols={setGridCols} setGridRows={setGridRows} gridCols={gridCols} gridRows={gridRows} generateGridImageWithWorker={generateGridImageWithWorker} showGrid={showGrid} />
-              </div>
-            )}
-
-          </div>
+        {/* Left Sidebar */}
+        <div className="w-3/10 bg-gray-200 z-10">
+          <Sidebar 
+            onSectionClick={setActiveSection} 
+            activeSection={activeSection}
+            addShape={addShape}
+            handleImageUpload={handleImageUpload}
+            shapes={shapes}
+            onSelectShape={setSelectedShape}
+            onReorder={handleReorderShapes}
+            onLockShape={handleLockShape}
+            canvasSize={canvasSize}
+            updateCanvasSize={updateCanvasSize}
+            downloadCanvas={downloadCanvas}
+            setGridCols={setGridCols}
+            setGridRows={setGridRows}
+            gridCols={gridCols}
+            gridRows={gridRows}
+            generateGridImageWithWorker={generateGridImageWithWorker}
+            showGrid={showGrid}
+            downloadGrid={downloadGrid}
+            gridImage={gridImage}
+            borderEnabled={borderEnabled}
+            setBorderEnabled={setBorderEnabled}
+            borderWidth={borderWidth}
+            setBorderWidth={setBorderWidth}
+            borderColor={borderColor}
+            setBorderColor={setBorderColor}
+          />
         </div>
 
         {/* Canvas Section */}
         <div className="w-5/10 flex flex-col items-center p-4">
           {/* Tile Type Selector */}
-          <div className="flex gap-2 mb-2">
-            <label className="text-sm font-medium text-gray-700">Tile Type:</label>
-            <select
-              value={tileType}
-              onChange={e => setTileType(e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1 text-sm"
-            >
-              <option value="square">Square</option>
-              <option value="brick">Brick</option>
-            </select>
-            {tileType === "brick" && (
-              <>
-                <label className="ml-2 text-sm font-medium text-gray-700">Brick Offset %</label>
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={brickOffset}
-                  onChange={e => setBrickOffset(Number(e.target.value))}
-                  className="border border-gray-300 rounded px-2 py-1 text-sm w-16"
-                />
-              </>
-            )}
+          <div className="flex flex-col items-center gap-2 mb-4">
+            <span className="text-sm font-medium text-gray-700">Tile Type</span>
+            <div className="flex items-center bg-gray-200 rounded-full p-1">
+              <button
+                className={`px-4 py-2 rounded-full transition text-sm font-medium ${tileType === "square" ? "bg-white shadow text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+                onClick={() => setTileType("square")}
+                type="button"
+              >
+                Square
+              </button>
+              <button
+                className={`px-4 py-2 rounded-full transition text-sm font-medium ${tileType === "brick" ? "bg-white shadow text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+                onClick={() => setTileType("brick")}
+                type="button"
+              >
+                Brick
+              </button>
+            </div>
           </div>
           {/* Main Canvas */}
           <canvas
@@ -1042,7 +1040,7 @@ const Editor = () => {
           ></canvas>
         </div>
         {/* Tools Section (Sidebar) */}
-        <div className="w-3/10 bg-gray-200 p-4 pr-0 pb-0 pt-0 flex flex-col"
+        <div className="w-3/10 bg-gray-200 p-0 pr-0 pb-0 pt-0 flex flex-col"
           style={{
             height: "100%",
           }}
@@ -1075,8 +1073,8 @@ const Editor = () => {
       {/* Bottom Tools Strip - align with main editor content */}
       <div className="flex justify-center w-full bg-transparent">
         <div
-          className="bg-white border-t border-gray-300 shadow-lg z-50 flex flex-row items-center justify-center gap-8 py-3 rounded-b-2xl bottom-toolbar"
-          style={{ minHeight: 64, width: '80%', maxWidth: 1200 }}
+          className="bg-white border-t border-gray-300 shadow-lg z-50 flex flex-row items-center justify-center gap-8 py-3"
+          style={{ minHeight: 64, width: '100%'}}
         >
           {/* Undo/Redo Group */}
           <div className="flex gap-2 items-center group-undo-redo">
@@ -1144,14 +1142,14 @@ const Editor = () => {
             >
               <FaSave className="inline mr-1" /> Save
             </button>
-            <button
+            {/* <button
               className="toolbar-btn bg-indigo-100 text-indigo-800 hover:bg-indigo-200 focus:ring-2 focus:ring-indigo-400"
               onClick={() => alert('Load Project logic goes here!')}
               title="Load Project"
               aria-label="Load"
             >
               <FaFolderOpen className="inline mr-1" /> Load
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

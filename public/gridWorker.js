@@ -1,26 +1,46 @@
 self.onmessage = function (e) {
-  const { gridCols, gridRows, boxImageData, boxWidth, boxHeight } = e.data;
+  const { gridCols, gridRows, canvasData, canvasWidth, canvasHeight, tileType, borderEnabled, borderWidth, borderColor } = e.data;
 
   // Validate inputs
-  if (!gridCols || !gridRows || !boxImageData || !boxWidth || !boxHeight) {
+  if (!gridCols || !gridRows || !canvasData || !canvasWidth || !canvasHeight) {
     throw new Error("Invalid input data for worker.");
   }
 
-  // Create a grid canvas
-  const gridCanvas = new OffscreenCanvas(boxWidth * gridCols, boxHeight * gridRows);
+  // Calculate border width (0 if disabled)
+  const actualBorderWidth = borderEnabled ? (borderWidth || 0) : 0;
+  
+  // Create a grid canvas with border space between tiles
+  const gridCanvas = new OffscreenCanvas(
+    canvasWidth * gridCols + (actualBorderWidth * (gridCols - 1)), 
+    canvasHeight * gridRows + (actualBorderWidth * (gridRows - 1))
+  );
   const gridCtx = gridCanvas.getContext("2d");
 
-  // Create an ImageData object from the inner content (excluding border)
-  const innerBoxImage = new ImageData(
-    new Uint8ClampedArray(boxImageData),
-    boxWidth,
-    boxHeight
+  // Fill background with border color if border is enabled
+  if (borderEnabled && actualBorderWidth > 0) {
+    gridCtx.fillStyle = borderColor || "#000000";
+    gridCtx.fillRect(0, 0, gridCanvas.width, gridCanvas.height);
+  }
+
+  // Create an ImageData object from the canvas data
+  const canvasImageData = new ImageData(
+    new Uint8ClampedArray(canvasData),
+    canvasWidth,
+    canvasHeight
   );
 
-  // Repeat the inner box content across the grid
+  // Repeat the canvas content across the grid
   for (let row = 0; row < gridRows; row++) {
     for (let col = 0; col < gridCols; col++) {
-      gridCtx.putImageData(innerBoxImage, col * boxWidth, row * boxHeight);
+      let x = col * (canvasWidth + actualBorderWidth);
+      let y = row * (canvasHeight + actualBorderWidth);
+      
+      // For brick pattern, offset every other row by half the width
+      if (tileType === "brick" && row % 2 === 1) {
+        x += (canvasWidth + actualBorderWidth) / 2;
+      }
+      
+      gridCtx.putImageData(canvasImageData, x, y);
     }
   }
 

@@ -38,6 +38,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
   }, [selectedShape, canvasSize.width, canvasSize.height]);
 
   const handleColorModeChange = (mode) => {
+    if (!selectedShape) return;
     setColorMode(mode);
     if (mode === "color") {
       selectedShape.gradient = null;
@@ -55,7 +56,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
 
   // Helper: get gradient bar background
   const getGradientBarBg = () => {
-    if (!selectedShape.gradient) return '#fff';
+    if (!selectedShape || !selectedShape.gradient) return '#fff';
     return `linear-gradient(90deg, ${selectedShape.gradient
       .slice()
       .sort((a, b) => a.offset - b.offset)
@@ -65,7 +66,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
 
   // Helper: handle bar click to add stop
   const handleBarClick = (e) => {
-    if (!gradientBarRef.current) return;
+    if (!gradientBarRef.current || !selectedShape || !selectedShape.gradient) return;
     const rect = gradientBarRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const offset = Math.max(0, Math.min(1, x / rect.width));
@@ -93,7 +94,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
 
   // Helper: handle dragging a stop
   const handleStopDrag = (idx, e) => {
-    if (!gradientBarRef.current) return;
+    if (!gradientBarRef.current || !selectedShape || !selectedShape.gradient) return;
     const rect = gradientBarRef.current.getBoundingClientRect();
     const onMove = (moveEvent) => {
       const x = moveEvent.type.startsWith('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
@@ -119,7 +120,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
 
   // Helper: remove stop
   const handleRemoveStop = (idx) => {
-    if (selectedShape.gradient.length <= 2) return;
+    if (!selectedShape || !selectedShape.gradient || selectedShape.gradient.length <= 2) return;
     selectedShape.gradient.splice(idx, 1);
     setShapes([...shapes]);
     setSelectedStopIdx(0);
@@ -138,26 +139,13 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
       ];
 
   return (
-    <div className="flex h-full w-full bg-white">
+    <div className="flex h-full bg-white w-full justify-end ">
       {/* Vertical Tabs */}
-      <nav className="flex flex-col items-center py-6 px-1 bg-gray-50 gap-2 border-r border-gray-200 h-full min-w-[60px] max-w-[70px]">
-        {sections.map(({ id, icon: Icon, label }) => (
-          <button
-            key={id}
-            onClick={() => setActiveSection(id)}
-            className={`flex flex-col items-center justify-center w-12 h-14 rounded-lg transition font-medium text-xs ${activeSection === id ? 'bg-blue-100 text-blue-600 shadow' : 'hover:bg-gray-200 text-gray-500'}`}
-            title={label}
-            type="button"
-          >
-            <Icon className="w-6 h-6 mb-1" />
-            <span className="text-[11px]">{label}</span>
-          </button>
-        ))}
-      </nav>
+      
       {/* Section Content */}
-      <div className="flex-1 p-4 flex flex-col gap-4 h-full overflow-y-auto bg-white" style={{maxWidth: 320}}>
+      <div className="flex-1 p-2 flex flex-col gap-4 h-full overflow-y-auto bg-gray-200" style={{maxWidth: 320}}>
         {/* Each section is a card */}
-        {activeSection === "fill" && (
+        {activeSection === "fill" && selectedShape && (
           <div className="rounded-xl border border-gray-200 bg-gray-50 shadow-sm p-4 flex flex-col gap-4 w-full max-w-[320px] mx-auto">
             <div className="flex items-center justify-between mb-2">
               <span className="font-semibold text-gray-700 text-base">Fill</span>
@@ -178,29 +166,68 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 </button>
               </div>
             </div>
-            {colorMode === "color" && (
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-600">Color:</span>
-                <label className="relative cursor-pointer">
-                  <span
-                    className="w-7 h-7 rounded-full border-2 border-gray-300 inline-block"
-                    style={{ background: selectedShape.color, display: "inline-block" }}
-                    title="Pick color"
+            {colorMode === "color" && selectedShape && (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-600">Color:</span>
+                  <label className="relative cursor-pointer">
+                    <span
+                      className="w-7 h-7 rounded-full border-2 border-gray-300 inline-block"
+                      style={{ background: selectedShape.color, display: "inline-block" }}
+                      title="Pick color"
+                    />
+                    <input
+                      type="color"
+                      value={selectedShape.color}
+                      onChange={e => {
+                        if (selectedShape) {
+                          selectedShape.color = e.target.value;
+                          setShapes([...shapes]);
+                        }
+                      }}
+                      className="absolute left-0 top-0 w-7 h-7 opacity-0 cursor-pointer"
+                      style={{ appearance: "none" }}
+                    />
+                  </label>
+                </div>
+                {/* Opacity Control */}
+                <div className="flex items-center gap-2">
+                  <label className="block text-xs font-medium text-gray-700 w-16">Opacity</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={selectedShape.opacity !== undefined ? selectedShape.opacity : 1}
+                    onChange={e => {
+                      if (selectedShape) {
+                        selectedShape.opacity = parseFloat(e.target.value);
+                        setShapes([...shapes]);
+                      }
+                    }}
+                    className="flex-1 accent-blue-500"
                   />
                   <input
-                    type="color"
-                    value={selectedShape.color}
+                    type="number"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={selectedShape.opacity !== undefined ? selectedShape.opacity : 1}
                     onChange={e => {
-                      selectedShape.color = e.target.value;
-                      setShapes([...shapes]);
+                      if (selectedShape) {
+                        let val = Math.max(0, Math.min(1, parseFloat(e.target.value) || 0));
+                        selectedShape.opacity = val;
+                        setShapes([...shapes]);
+                      }
                     }}
-                    className="absolute left-0 top-0 w-7 h-7 opacity-0 cursor-pointer"
-                    style={{ appearance: "none" }}
+                    className="w-12 border rounded px-2 py-1 text-xs ml-2"
+                    aria-label="Opacity value"
                   />
-                </label>
+                  <span className="w-8 text-right text-xs text-gray-500">{((selectedShape.opacity !== undefined ? selectedShape.opacity : 1) * 100).toFixed(0)}%</span>
+                </div>
               </div>
             )}
-            {colorMode === "gradient" && (
+            {colorMode === "gradient" && selectedShape && (
               <div className="gradient-control p-2 border rounded bg-white mt-2">
                 <label className="block text-xs font-medium text-gray-700 mb-1">Gradient Editor</label>
                 {selectedShape.gradient && selectedShape.gradient.length > 0 && (
@@ -308,8 +335,10 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                           type="color"
                           value={selectedShape.gradient[selectedStopIdx]?.color || '#000000'}
                           onChange={e => {
-                            selectedShape.gradient[selectedStopIdx].color = e.target.value;
-                            setShapes([...shapes]);
+                            if (selectedShape && selectedShape.gradient && selectedShape.gradient[selectedStopIdx]) {
+                              selectedShape.gradient[selectedStopIdx].color = e.target.value;
+                              setShapes([...shapes]);
+                            }
                           }}
                           className="absolute left-0 top-0 w-7 h-7 opacity-0 cursor-pointer"
                           style={{ appearance: "none" }}
@@ -322,6 +351,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                         step={0.01}
                         value={selectedShape.gradient[selectedStopIdx]?.offset || 0}
                         onChange={e => {
+                          if (!selectedShape || !selectedShape.gradient || !selectedShape.gradient[selectedStopIdx]) return;
                           let val = Math.max(0, Math.min(1, parseFloat(e.target.value)));
                           // Prevent overlap
                           const stops = selectedShape.gradient;
@@ -344,8 +374,10 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                         step={1}
                         value={selectedShape.gradientAngle !== undefined ? selectedShape.gradientAngle : 45}
                         onChange={e => {
-                          selectedShape.gradientAngle = parseInt(e.target.value, 10);
-                          setShapes([...shapes]);
+                          if (selectedShape) {
+                            selectedShape.gradientAngle = parseInt(e.target.value, 10);
+                            setShapes([...shapes]);
+                          }
                         }}
                         className="flex-1 accent-blue-500"
                       />
@@ -356,9 +388,11 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                         step={1}
                         value={selectedShape.gradientAngle !== undefined ? selectedShape.gradientAngle : 45}
                         onChange={e => {
-                          let val = Math.max(0, Math.min(360, parseInt(e.target.value, 10) || 0));
-                          selectedShape.gradientAngle = val;
-                          setShapes([...shapes]);
+                          if (selectedShape) {
+                            let val = Math.max(0, Math.min(360, parseInt(e.target.value, 10) || 0));
+                            selectedShape.gradientAngle = val;
+                            setShapes([...shapes]);
+                          }
                         }}
                         className="w-14 border rounded px-2 py-1 text-xs ml-2"
                         aria-label="Gradient angle in degrees"
@@ -370,20 +404,57 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                     <button
                       className="bg-gray-400 text-white px-3 py-1 rounded text-xs mt-2"
                       onClick={() => {
-                        selectedShape.gradient = null;
-                        setShapes([...shapes]);
-                        setColorMode('color');
+                        if (selectedShape) {
+                          selectedShape.gradient = null;
+                          setShapes([...shapes]);
+                          setColorMode('color');
+                        }
                       }}
                     >
                       Remove Gradient
                     </button>
+                    {/* Opacity Control for Gradient */}
+                    <div className="flex items-center gap-2 mt-3">
+                      <label className="block text-xs font-medium text-gray-700 w-16">Opacity</label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={selectedShape.opacity !== undefined ? selectedShape.opacity : 1}
+                        onChange={e => {
+                          if (selectedShape) {
+                            selectedShape.opacity = parseFloat(e.target.value);
+                            setShapes([...shapes]);
+                          }
+                        }}
+                        className="flex-1 accent-blue-500"
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={selectedShape.opacity !== undefined ? selectedShape.opacity : 1}
+                        onChange={e => {
+                          if (selectedShape) {
+                            let val = Math.max(0, Math.min(1, parseFloat(e.target.value) || 0));
+                            selectedShape.opacity = val;
+                            setShapes([...shapes]);
+                          }
+                        }}
+                        className="w-12 border rounded px-2 py-1 text-xs ml-2"
+                        aria-label="Opacity value"
+                      />
+                      <span className="w-8 text-right text-xs text-gray-500">{((selectedShape.opacity !== undefined ? selectedShape.opacity : 1) * 100).toFixed(0)}%</span>
+                    </div>
                   </>
                 )}
               </div>
             )}
           </div>
         )}
-        {activeSection === "resize" && (
+        {activeSection === "resize" && selectedShape && (
           <div className="rounded-xl border border-gray-200 bg-gray-50 shadow-sm p-4 flex flex-col gap-4 w-full max-w-[320px] mx-auto">
             <div className="flex items-center justify-between mb-2">
               <span className="font-semibold text-gray-700 text-base">Size & Position</span>
@@ -406,6 +477,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 step="0.1"
                 value={((selectedShape.x / canvasSize.width) * 100).toFixed(1)}
                 onChange={e => {
+                  if (!selectedShape) return;
                   let percent = Math.max(0, Math.min(100, parseFloat(e.target.value) || 0));
                   selectedShape.x = (percent / 100) * canvasSize.width;
                   setShapes([...shapes]);
@@ -420,6 +492,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 step="0.1"
                 value={((selectedShape.x / canvasSize.width) * 100).toFixed(1)}
                 onChange={e => {
+                  if (!selectedShape) return;
                   let percent = Math.max(0, Math.min(100, parseFloat(e.target.value) || 0));
                   selectedShape.x = (percent / 100) * canvasSize.width;
                   setShapes([...shapes]);
@@ -439,6 +512,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 step="0.1"
                 value={((selectedShape.y / canvasSize.height) * 100).toFixed(1)}
                 onChange={e => {
+                  if (!selectedShape) return;
                   let percent = Math.max(0, Math.min(100, parseFloat(e.target.value) || 0));
                   selectedShape.y = (percent / 100) * canvasSize.height;
                   setShapes([...shapes]);
@@ -453,6 +527,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 step="0.1"
                 value={((selectedShape.y / canvasSize.height) * 100).toFixed(1)}
                 onChange={e => {
+                  if (!selectedShape) return;
                   let percent = Math.max(0, Math.min(100, parseFloat(e.target.value) || 0));
                   selectedShape.y = (percent / 100) * canvasSize.height;
                   setShapes([...shapes]);
@@ -471,6 +546,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 step="1"
                 value={widthPercent}
                 onChange={e => {
+                  if (!selectedShape) return;
                   let percent = Math.max(1, parseFloat(e.target.value) || 1);
                   setWidthPercent(percent);
                   let newWidth = (percent / 100) * canvasSize.width;
@@ -484,9 +560,11 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                   setShapes([...shapes]);
                 }}
                 onBlur={() => {
-                  setWidthPercent(
-                    ((selectedShape.width / canvasSize.width) * 100).toString().replace(/\.0+$/, '')
-                  );
+                  if (selectedShape) {
+                    setWidthPercent(
+                      ((selectedShape.width / canvasSize.width) * 100).toString().replace(/\.0+$/, '')
+                    );
+                  }
                 }}
                 className="w-16 border rounded px-2 py-1 text-xs ml-2"
                 aria-label="Width in %"
@@ -502,6 +580,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 step="1"
                 value={heightPercent}
                 onChange={e => {
+                  if (!selectedShape) return;
                   let percent = Math.max(1, parseFloat(e.target.value) || 1);
                   setHeightPercent(percent);
                   let newHeight = (percent / 100) * canvasSize.height;
@@ -515,9 +594,11 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                   setShapes([...shapes]);
                 }}
                 onBlur={() => {
-                  setHeightPercent(
-                    ((selectedShape.height / canvasSize.height) * 100).toString().replace(/\.0+$/, '')
-                  );
+                  if (selectedShape) {
+                    setHeightPercent(
+                      ((selectedShape.height / canvasSize.height) * 100).toString().replace(/\.0+$/, '')
+                    );
+                  }
                 }}
                 className="w-16 border rounded px-2 py-1 text-xs ml-2"
                 aria-label="Height in %"
@@ -534,6 +615,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 step={1}
                 value={((selectedShape.rotation || 0) * 180 / Math.PI).toFixed(0)}
                 onChange={e => {
+                  if (!selectedShape) return;
                   selectedShape.rotation = (parseInt(e.target.value, 10) * Math.PI) / 180;
                   setShapes([...shapes]);
                 }}
@@ -546,6 +628,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 step={1}
                 value={((selectedShape.rotation || 0) * 180 / Math.PI).toFixed(0)}
                 onChange={e => {
+                  if (!selectedShape) return;
                   let deg = Math.max(0, Math.min(360, parseInt(e.target.value, 10) || 0));
                   selectedShape.rotation = (deg * Math.PI) / 180;
                   setShapes([...shapes]);
@@ -757,7 +840,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
             </>}
           </div>
         )}
-        {activeSection === "layer" && (
+        {activeSection === "layer" && selectedShape && (
           <div className="rounded-xl border border-gray-200 bg-gray-50 shadow-sm p-4 flex flex-col gap-4 items-center w-full max-w-[320px] mx-auto">
             <span className="font-semibold text-gray-700 text-base mb-2">Actions</span>
             <div className="flex flex-row gap-5 justify-center flex-wrap">
@@ -790,9 +873,11 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 <button
                   className="bg-green-100 hover:bg-green-200 text-green-700 p-2 rounded-full border border-green-200 shadow-sm"
                   onClick={() => {
-                    selectedShape.x = canvasSize.width / 2;
-                    selectedShape.y = canvasSize.height / 2;
-                    setShapes([...shapes]);
+                    if (selectedShape) {
+                      selectedShape.x = canvasSize.width / 2;
+                      selectedShape.y = canvasSize.height / 2;
+                      setShapes([...shapes]);
+                    }
                   }}
                   title="Center Shape"
                   type="button"
@@ -806,12 +891,14 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 <button
                   className="bg-yellow-100 hover:bg-yellow-200 text-yellow-700 p-2 rounded-full border border-yellow-200 shadow-sm"
                   onClick={() => {
-                    selectedShape.x = canvasSize.width / 2;
-                    selectedShape.y = canvasSize.height / 2;
-                    selectedShape.width = canvasSize.width * 0.2;
-                    selectedShape.height = canvasSize.height * 0.2;
-                    selectedShape.rotation = 0;
-                    setShapes([...shapes]);
+                    if (selectedShape) {
+                      selectedShape.x = canvasSize.width / 2;
+                      selectedShape.y = canvasSize.height / 2;
+                      selectedShape.width = canvasSize.width * 0.2;
+                      selectedShape.height = canvasSize.height * 0.2;
+                      selectedShape.rotation = 0;
+                      setShapes([...shapes]);
+                    }
                   }}
                   title="Reset Size/Position"
                   type="button"
@@ -1088,6 +1175,20 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
           </div>
         )}
       </div>
+      <nav className="flex flex-col items-center py-6 px-1 bg-gray-400 gap-2 border-r border-gray-200 h-full min-w-[60px] max-w-[70px]">
+        {sections.map(({ id, icon: Icon, label }) => (
+          <button
+            key={id}
+            onClick={() => setActiveSection(id)}
+            className={`flex flex-col items-center justify-center w-12 h-14 rounded-lg transition font-medium text-xs ${activeSection === id ? 'bg-teal-100 text-teal-800 shadow' : 'hover:bg-gray-200 text-gray-800'}`}
+            title={label}
+            type="button"
+          >
+            <Icon className="w-6 h-6 mb-1" />
+            <span className="text-[11px]">{label}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   );
 };
