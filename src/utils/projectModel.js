@@ -3,8 +3,14 @@
 
 const PROJECT_PREFIX = 'flowtile_project_';
 
-export const saveProject = (name, data) => {
-  localStorage.setItem(`${PROJECT_PREFIX}${name}`, JSON.stringify(data));
+export const saveProject = (name, data, thumbnail = null) => {
+  const projectData = {
+    ...data,
+    thumbnail,
+    lastModified: new Date().toISOString(),
+    createdAt: data.createdAt || new Date().toISOString()
+  };
+  localStorage.setItem(`${PROJECT_PREFIX}${name}`, JSON.stringify(projectData));
 };
 
 export const loadProject = (name) => {
@@ -15,7 +21,19 @@ export const loadProject = (name) => {
 export const listProjects = () => {
   return Object.keys(localStorage)
     .filter(key => key.startsWith(PROJECT_PREFIX))
-    .map(key => key.replace(PROJECT_PREFIX, ''));
+    .map(key => {
+      const name = key.replace(PROJECT_PREFIX, '');
+      const data = loadProject(name);
+      return {
+        name,
+        thumbnail: data?.thumbnail,
+        lastModified: data?.lastModified,
+        createdAt: data?.createdAt,
+        shapeCount: data?.shapes?.length || 0,
+        canvasSize: data?.canvasSize || { width: 500, height: 500 }
+      };
+    })
+    .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified));
 };
 
 export const deleteProject = (name) => {

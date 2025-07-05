@@ -10,7 +10,7 @@ import ArrangeSection from "./ArrangeSection";
 import { GridSection } from "./GridSection";
 import './styles.css'
 import { saveProject as saveProjectModel, loadProject as loadProjectModel, listProjects, saveImageToIndexedDB, getImageFromIndexedDB } from "../../utils/projectModel";
-import { FaUndo, FaRedo, FaFileExport, FaFileImport, FaDownload, FaSave, FaFolderOpen } from "react-icons/fa";
+import { FaUndo, FaRedo, FaFileExport, FaFileImport, FaDownload, FaSave, FaFolderOpen, FaImage } from "react-icons/fa";
 
 const Editor = () => {
   const { projectName } = useParams();
@@ -850,8 +850,53 @@ const Editor = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undoStack, redoStack, shapes]);
 
+  // Generate thumbnail from canvas
+  const generateThumbnail = () => {
+    if (!canvasRef.current) return null;
+    
+    return new Promise((resolve) => {
+      // Wait for the next frame to ensure canvas is fully rendered
+      requestAnimationFrame(() => {
+        // Add a small delay to ensure all shapes are drawn
+        setTimeout(() => {
+          const canvas = canvasRef.current;
+          if (!canvas) {
+            resolve(null);
+            return;
+          }
+          
+          const thumbnailCanvas = document.createElement('canvas');
+          const thumbnailSize = 300; // Thumbnail size
+          
+          // Calculate aspect ratio
+          const aspectRatio = canvas.width / canvas.height;
+          let thumbWidth, thumbHeight;
+          
+          if (aspectRatio > 1) {
+            thumbWidth = thumbnailSize;
+            thumbHeight = thumbnailSize / aspectRatio;
+          } else {
+            thumbHeight = thumbnailSize;
+            thumbWidth = thumbnailSize * aspectRatio;
+          }
+          
+          thumbnailCanvas.width = thumbWidth;
+          thumbnailCanvas.height = thumbHeight;
+          
+          const ctx = thumbnailCanvas.getContext('2d');
+          
+          // Draw the canvas content to thumbnail
+          ctx.drawImage(canvas, 0, 0, thumbWidth, thumbHeight);
+          
+          const thumbnailDataUrl = thumbnailCanvas.toDataURL('image/png', 0.8);
+          resolve(thumbnailDataUrl);
+        }, 100); // Small delay to ensure rendering is complete
+      });
+    });
+  };
+
   // Save Project Functionality (save to current project only, using export logic)
-  const saveProject = () => {
+  const saveProject = async () => {
     if (!projectName) {
       alert("No project is currently open.");
       return;
@@ -863,8 +908,27 @@ const Editor = () => {
       canvasBg,
       // Add other relevant state if needed
     };
-    saveProjectModel(projectName, projectData);
+    const thumbnail = await generateThumbnail();
+    saveProjectModel(projectName, projectData, thumbnail);
     alert(`Project '${projectName}' saved!`);
+  };
+
+  // Regenerate thumbnail for current project
+  const regenerateThumbnail = async () => {
+    if (!projectName) {
+      alert("No project is currently open.");
+      return;
+    }
+    const thumbnail = await generateThumbnail();
+    if (thumbnail) {
+      const currentData = loadProjectModel(projectName);
+      if (currentData) {
+        saveProjectModel(projectName, currentData, thumbnail);
+        alert("Thumbnail regenerated successfully!");
+      }
+    } else {
+      alert("Failed to generate thumbnail. Please try again.");
+    }
   };
 
   // Load Project Functionality (using the model)
@@ -893,8 +957,14 @@ const Editor = () => {
     if (!projectName) return;
     // Only save if shapes or canvasSize are not empty/default
     if (shapes.length === 0 && canvasSize.width === 500 && canvasSize.height === 500) return;
-    const projectData = { shapes: getSerializableShapes(), canvasSize, tileType, canvasBg };
-    saveProjectModel(projectName, projectData);
+    
+    const performAutosave = async () => {
+      const projectData = { shapes: getSerializableShapes(), canvasSize, tileType, canvasBg };
+      const thumbnail = await generateThumbnail();
+      saveProjectModel(projectName, projectData, thumbnail);
+    };
+    
+    performAutosave();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shapes, canvasSize, projectName, tileType, canvasBg]);
 
@@ -1141,6 +1211,14 @@ const Editor = () => {
               aria-label="Save"
             >
               <FaSave className="inline mr-1" /> Save
+            </button>
+            <button
+              className="toolbar-btn bg-orange-100 text-orange-800 hover:bg-orange-200 focus:ring-2 focus:ring-orange-400"
+              onClick={regenerateThumbnail}
+              title="Regenerate Thumbnail"
+              aria-label="Regenerate Thumbnail"
+            >
+              <FaImage className="inline mr-1" /> Thumbnail
             </button>
             {/* <button
               className="toolbar-btn bg-indigo-100 text-indigo-800 hover:bg-indigo-200 focus:ring-2 focus:ring-indigo-400"
