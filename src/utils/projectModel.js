@@ -40,6 +40,27 @@ export const deleteProject = (name) => {
   localStorage.removeItem(`${PROJECT_PREFIX}${name}`);
 };
 
+export const renameProject = (oldName, newName) => {
+  // Check if the new name already exists
+  if (loadProject(newName)) {
+    throw new Error('A project with this name already exists');
+  }
+  
+  // Load the existing project data
+  const projectData = loadProject(oldName);
+  if (!projectData) {
+    throw new Error('Project not found');
+  }
+  
+  // Save the project with the new name
+  saveProject(newName, projectData, projectData.thumbnail);
+  
+  // Delete the old project
+  deleteProject(oldName);
+  
+  return true;
+};
+
 // IndexedDB helpers for image storage
 const IMAGE_DB_NAME = 'flowtile_images_db';
 const IMAGE_STORE_NAME = 'flowtile_images';

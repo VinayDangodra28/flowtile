@@ -1,7 +1,82 @@
 @import "tailwindcss";
 
+:root {
+  /* Light mode colors */
+  --background-light: #ffffff;
+  --text-light: #000000;
+  --text-secondary-light: #006B74;
+  --surface-light: #ffffff;
+  --border-light: #e5e7eb;
+  --accent-light: #00A5B5;
+  --hero-bg-light: linear-gradient(to bottom, #e6fafd, #f6ffff, #e6fafd);
+  --card-bg-light: #ffffff;
+  --navbar-bg-light: #f9fafb;
+  --feature-section-light: #f8fafc;
+  
+  /* Dark mode colors */
+  --background-dark: #242424;
+  --text-dark: #e5e7eb;
+  --text-secondary-dark: #82E9F0;
+  --surface-dark: #2d2d2d;
+  --border-dark: #374151;
+  --accent-dark: #00A5B5;
+  --hero-bg-dark: linear-gradient(to bottom, #1a1a1a, #242424, #1a1a1a);
+  --card-bg-dark: #2d2d2d;
+  --navbar-bg-dark: #1e1e1e;
+  --feature-section-dark: #1e1e1e;
+}
+
+/* Apply theme variables */
+.light {
+  --background: var(--background-light);
+  --text: var(--text-light);
+  --text-secondary: var(--text-secondary-light);
+  --surface: var(--surface-light);
+  --border: var(--border-light);
+  --accent: var(--accent-light);
+  --hero-bg: var(--hero-bg-light);
+  --card-bg: var(--card-bg-light);
+  --navbar-bg: var(--navbar-bg-light);
+  --feature-section: var(--feature-section-light);
+}
+
+.dark {
+  --background: var(--background-dark);
+  --text: var(--text-dark);
+  --text-secondary: var(--text-secondary-dark);
+  --surface: var(--surface-dark);
+  --border: var(--border-dark);
+  --accent: var(--accent-dark);
+  --hero-bg: var(--hero-bg-dark);
+  --card-bg: var(--card-bg-dark);
+  --navbar-bg: var(--navbar-bg-dark);
+  --feature-section: var(--feature-section-dark);
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background);
+  color: var(--text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
 
 h1 {
-    display: flex;
-    flex-direction: row;
+  display: flex;
+  flex-direction: row;
+}
+
+/* Base button styles */
+button, .btn {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Scroll smooth */
+html {
+  scroll-behavior: smooth;
 }

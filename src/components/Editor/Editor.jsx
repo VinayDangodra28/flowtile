@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Shape from "./Shape";
 import ShapeList from "./ShapeList";
 import Sidebar from "./Sidebar";
@@ -9,11 +9,16 @@ import CanvasSection from "./CanvasSection";
 import ArrangeSection from "./ArrangeSection";
 import { GridSection } from "./GridSection";
 import './styles.css'
-import { saveProject as saveProjectModel, loadProject as loadProjectModel, listProjects, saveImageToIndexedDB, getImageFromIndexedDB } from "../../utils/projectModel";
+import { saveProject as saveProjectModel, loadProject as loadProjectModel, listProjects, saveImageToIndexedDB, getImageFromIndexedDB, renameProject } from "../../utils/projectModel";
 import { FaUndo, FaRedo, FaFileExport, FaFileImport, FaDownload, FaSave, FaFolderOpen, FaImage } from "react-icons/fa";
+import { useTheme } from "../../context/ThemeContext";
+import { useProject } from "../../context/ProjectContext";
 
 const Editor = () => {
   const { projectName } = useParams();
+  const navigate = useNavigate();
+  const { theme } = useTheme();
+  const { setCurrentProject, updateProjectName } = useProject();
   const canvasRef = useRef(null);
   const parentRef = useRef(null);
   const [canvasSize, setCanvasSize] = useState({ width: 500, height: 500 });
@@ -853,7 +858,6 @@ const Editor = () => {
   // Generate thumbnail from canvas
   const generateThumbnail = () => {
     if (!canvasRef.current) return null;
-    
     return new Promise((resolve) => {
       // Wait for the next frame to ensure canvas is fully rendered
       requestAnimationFrame(() => {
@@ -864,14 +868,11 @@ const Editor = () => {
             resolve(null);
             return;
           }
-          
           const thumbnailCanvas = document.createElement('canvas');
           const thumbnailSize = 300; // Thumbnail size
-          
           // Calculate aspect ratio
           const aspectRatio = canvas.width / canvas.height;
           let thumbWidth, thumbHeight;
-          
           if (aspectRatio > 1) {
             thumbWidth = thumbnailSize;
             thumbHeight = thumbnailSize / aspectRatio;
@@ -879,15 +880,11 @@ const Editor = () => {
             thumbHeight = thumbnailSize;
             thumbWidth = thumbnailSize * aspectRatio;
           }
-          
           thumbnailCanvas.width = thumbWidth;
           thumbnailCanvas.height = thumbHeight;
-          
           const ctx = thumbnailCanvas.getContext('2d');
-          
           // Draw the canvas content to thumbnail
           ctx.drawImage(canvas, 0, 0, thumbWidth, thumbHeight);
-          
           const thumbnailDataUrl = thumbnailCanvas.toDataURL('image/png', 0.8);
           resolve(thumbnailDataUrl);
         }, 100); // Small delay to ensure rendering is complete
@@ -898,7 +895,8 @@ const Editor = () => {
   // Save Project Functionality (save to current project only, using export logic)
   const saveProject = async () => {
     if (!projectName) {
-      alert("No project is currently open.");
+      // This should not happen now since we auto-create projects, but just in case
+      await createNewProject();
       return;
     }
     const projectData = {
@@ -916,7 +914,8 @@ const Editor = () => {
   // Regenerate thumbnail for current project
   const regenerateThumbnail = async () => {
     if (!projectName) {
-      alert("No project is currently open.");
+      // This should not happen now since we auto-create projects, but just in case
+      await createNewProject();
       return;
     }
     const thumbnail = await generateThumbnail();
@@ -931,23 +930,70 @@ const Editor = () => {
     }
   };
 
+  // Generate a unique project name
+  const generateUniqueProjectName = () => {
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+    const existingProjects = listProjects();
+    let baseName = `New Project ${timestamp}`;
+    let counter = 1;
+    let uniqueName = baseName;
+    
+    while (existingProjects.some(p => p.name === uniqueName)) {
+      uniqueName = `${baseName} (${counter})`;
+      counter++;
+    }
+    
+    return uniqueName;
+  };
+
+  // Create and save a new project
+  const createNewProject = async () => {
+    const newProjectName = generateUniqueProjectName();
+    const initialData = {
+      shapes: [],
+      canvasSize: { width: 500, height: 500 },
+      tileType: "square",
+      canvasBg: "transparent"
+    };
+    
+    // Generate initial thumbnail
+    const thumbnail = await generateThumbnail();
+    saveProjectModel(newProjectName, initialData, thumbnail);
+    
+    // Navigate to the new project
+    navigate(`/editor/${encodeURIComponent(newProjectName)}`, { replace: true });
+    return newProjectName;
+  };
+
   // Load Project Functionality (using the model)
   useEffect(() => {
-    if (projectName) {
-      const data = loadProjectModel(projectName);
-      if (data && Array.isArray(data.shapes)) {
-        setCanvasSize(data.canvasSize || { width: 500, height: 500 });
-        setShapes(deserializeShapes(data.shapes));
-        if (data.tileType) setTileType(data.tileType);
-        if (data.canvasBg !== undefined) setCanvasBg(data.canvasBg);
+    const loadOrCreateProject = async () => {
+      if (projectName) {
+        // Load existing project
+        const data = loadProjectModel(projectName);
+        if (data && Array.isArray(data.shapes)) {
+          setCanvasSize(data.canvasSize || { width: 500, height: 500 });
+          setShapes(deserializeShapes(data.shapes));
+          if (data.tileType) setTileType(data.tileType);
+          if (data.canvasBg !== undefined) setCanvasBg(data.canvasBg);
+        } else {
+          // If no data, reset to blank
+          setCanvasSize({ width: 500, height: 500 });
+          setShapes([]);
+          setTileType("square");
+          setCanvasBg("transparent");
+        }
+        // Set current project in context
+        setCurrentProject({ name: projectName });
       } else {
-        // If no data, reset to blank
-        setCanvasSize({ width: 500, height: 500 });
-        setShapes([]);
-        setTileType("square");
-        setCanvasBg("transparent");
+        // No project is open, create a new one automatically
+        const newProjectName = await createNewProject();
+        // Set current project in context
+        setCurrentProject({ name: newProjectName });
       }
-    }
+    };
+
+    loadOrCreateProject();
     // Only run on mount or when projectName changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectName]);
@@ -1042,11 +1088,18 @@ const Editor = () => {
     });
   };
 
+  // Cleanup: Clear current project when component unmounts
+  useEffect(() => {
+    return () => {
+      setCurrentProject(null);
+    };
+  }, [setCurrentProject]);
+
   return (
-    <div ref={parentRef} className="flex flex-col editor" style={{ height: "90vh" }}>
+    <div ref={parentRef} className={`flex flex-col editor ${theme === 'dark' ? 'bg-[#242424]' : 'bg-gray-50'}`} style={{ height: "90vh" }}>
       <div className="flex flex-1" style={{ height: "calc(90vh - 70px)" }}>
         {/* Left Sidebar */}
-        <div className="w-3/10 bg-gray-200 z-10">
+        <div className={`w-3/10 z-10 ${theme === 'dark' ? 'bg-[#2d2d2d]' : 'bg-gray-200'}`}>
           <Sidebar 
             onSectionClick={setActiveSection} 
             activeSection={activeSection}
@@ -1077,20 +1130,28 @@ const Editor = () => {
         </div>
 
         {/* Canvas Section */}
-        <div className="w-5/10 flex flex-col items-center p-4">
+        <div className={`w-5/10 flex flex-col items-center p-4 ${theme === 'dark' ? 'bg-[#242424]' : 'bg-white'}`}>
           {/* Tile Type Selector */}
-          <div className="flex flex items-center gap-2 mb-2">
-            <span className="text-sm font-medium text-gray-700">Tile Type</span>
-            <div className="flex items-center bg-gray-200 rounded-full p-1">
+          <div className="flex items-center gap-2 mb-2">
+            <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Tile Type</span>
+            <div className={`flex items-center rounded-full p-1 ${theme === 'dark' ? 'bg-[#3a3a3a]' : 'bg-gray-200'}`}>
               <button
-                className={`px-4 py-2 rounded-full transition text-sm font-medium ${tileType === "square" ? "bg-white shadow text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+                className={`px-4 py-2 rounded-full transition text-sm font-medium ${
+                  tileType === "square" 
+                    ? theme === 'dark' ? "bg-[#00A5B5] shadow text-white" : "bg-white shadow text-[#00A5B5]"
+                    : theme === 'dark' ? "text-gray-400 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"
+                }`}
                 onClick={() => setTileType("square")}
                 type="button"
               >
                 Square
               </button>
               <button
-                className={`px-4 py-2 rounded-full transition text-sm font-medium ${tileType === "brick" ? "bg-white shadow text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+                className={`px-4 py-2 rounded-full transition text-sm font-medium ${
+                  tileType === "brick" 
+                    ? theme === 'dark' ? "bg-[#00A5B5] shadow text-white" : "bg-white shadow text-[#00A5B5]"
+                    : theme === 'dark' ? "text-gray-400 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"
+                }`}
                 onClick={() => setTileType("brick")}
                 type="button"
               >
@@ -1103,14 +1164,14 @@ const Editor = () => {
             ref={canvasRef}
             width={canvasSize.width}
             height={canvasSize.height}
-            className="border rounded"
+            className={`border rounded ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
           ></canvas>
         </div>
         {/* Tools Section (Sidebar) */}
-        <div className="w-3/10 bg-gray-200 p-0 pr-0 pb-0 pt-0 flex flex-col"
+        <div className={`w-3/10 p-0 pr-0 pb-0 pt-0 flex flex-col ${theme === 'dark' ? 'bg-[#2d2d2d]' : 'bg-gray-200'}`}
           style={{
             height: "100%",
           }}
@@ -1141,16 +1202,24 @@ const Editor = () => {
         </div>
       </div>
       {/* Bottom Tools Strip - align with main editor content */}
-      <div className="flex justify-center w-full bg-transparent">
+      <div className={`flex justify-center w-full ${theme === 'dark' ? 'bg-[#242424]' : 'bg-transparent'}`}>
         <div
-          className="bg-white border-t border-gray-300 shadow-lg z-50 flex flex-row items-center justify-center gap-8 py-3"
+          className={`border-t shadow-lg z-50 flex flex-row items-center justify-center gap-8 py-3 ${
+            theme === 'dark' 
+              ? 'bg-[#2d2d2d] border-gray-700' 
+              : 'bg-white border-gray-300'
+          }`}
           style={{ minHeight: 64, width: '100%'}}
         >
           {/* Undo/Redo Group */}
           <div className="flex gap-2 items-center group-undo-redo">
             <button
               onClick={handleUndo}
-              className="toolbar-btn bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-2 focus:ring-blue-300"
+              className={`toolbar-btn ${
+                theme === 'dark' 
+                  ? 'bg-[#3a3a3a] text-gray-300 hover:bg-[#4a4a4a] focus:ring-2 focus:ring-[#00A5B5]' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-2 focus:ring-[#00A5B5]'
+              }`}
               disabled={undoStack.length === 0}
               title="Undo (Ctrl+Z)"
               aria-label="Undo"
@@ -1159,8 +1228,12 @@ const Editor = () => {
             </button>
             <button
               onClick={handleRedo}
-              className="toolbar-btn bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-2 focus:ring-blue-300"
-              disabled={redoStack.length === 0}
+              className={`toolbar-btn ${
+                theme === 'dark' 
+                  ? 'bg-[#3a3a3a] text-gray-300 hover:bg-[#4a4a4a] focus:ring-2 focus:ring-[#00A5B5]' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-2 focus:ring-[#00A5B5]'
+              }`}
+              disabled={undoStack.length === 0}
               title="Redo (Ctrl+Y)"
               aria-label="Redo"
             >
@@ -1171,7 +1244,11 @@ const Editor = () => {
           <div className="flex gap-2 items-center group-import-export">
             <button
               onClick={exportShapes}
-              className="toolbar-btn bg-green-100 text-green-800 hover:bg-green-200 focus:ring-2 focus:ring-green-400"
+              className={`toolbar-btn ${
+                theme === 'dark' 
+                  ? 'bg-green-900 text-green-100 hover:bg-green-800 focus:ring-2 focus:ring-green-400' 
+                  : 'bg-green-100 text-green-800 hover:bg-green-200 focus:ring-2 focus:ring-green-400'
+              }`}
               title="Export Shapes"
               aria-label="Export"
             >
@@ -1179,7 +1256,11 @@ const Editor = () => {
             </button>
             <label
               htmlFor="upload-input"
-              className="toolbar-btn bg-purple-100 text-purple-800 hover:bg-purple-200 focus:ring-2 focus:ring-purple-400 cursor-pointer flex items-center"
+              className={`toolbar-btn cursor-pointer flex items-center ${
+                theme === 'dark' 
+                  ? 'bg-purple-900 text-purple-100 hover:bg-purple-800 focus:ring-2 focus:ring-purple-400' 
+                  : 'bg-purple-100 text-purple-800 hover:bg-purple-200 focus:ring-2 focus:ring-purple-400'
+              }`}
               title="Import Shapes"
               aria-label="Import"
               style={{ marginBottom: 0 }}
@@ -1197,7 +1278,11 @@ const Editor = () => {
           {/* Download/Save/Load Group */}
           <div className="flex gap-2 items-center group-download-save">
             <button
-              className="toolbar-btn bg-blue-100 text-blue-800 hover:bg-blue-200 focus:ring-2 focus:ring-blue-400"
+              className={`toolbar-btn ${
+                theme === 'dark' 
+                  ? 'bg-blue-900 text-blue-100 hover:bg-blue-800 focus:ring-2 focus:ring-blue-400' 
+                  : 'bg-blue-100 text-blue-800 hover:bg-blue-200 focus:ring-2 focus:ring-blue-400'
+              }`}
               onClick={() => setShowDownloadModal(true)}
               title="Download Canvas"
               aria-label="Download"
@@ -1205,78 +1290,119 @@ const Editor = () => {
               <FaDownload className="inline mr-1" /> Download
             </button>
             <button
-              className="toolbar-btn bg-yellow-100 text-yellow-800 hover:bg-yellow-200 focus:ring-2 focus:ring-yellow-400"
+              className={`toolbar-btn ${
+                theme === 'dark' 
+                  ? 'bg-yellow-900 text-yellow-100 hover:bg-yellow-800 focus:ring-2 focus:ring-yellow-400' 
+                  : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 focus:ring-2 focus:ring-yellow-400'
+              }`}
               onClick={saveProject}
               title="Save Project"
               aria-label="Save"
             >
               <FaSave className="inline mr-1" /> Save
             </button>
-            <button
-              className="toolbar-btn bg-orange-100 text-orange-800 hover:bg-orange-200 focus:ring-2 focus:ring-orange-400"
-              onClick={regenerateThumbnail}
-              title="Regenerate Thumbnail"
-              aria-label="Regenerate Thumbnail"
-            >
-              <FaImage className="inline mr-1" /> Thumbnail
-            </button>
-            {/* <button
-              className="toolbar-btn bg-indigo-100 text-indigo-800 hover:bg-indigo-200 focus:ring-2 focus:ring-indigo-400"
-              onClick={() => alert('Load Project logic goes here!')}
-              title="Load Project"
-              aria-label="Load"
-            >
-              <FaFolderOpen className="inline mr-1" /> Load
-            </button> */}
+            
           </div>
         </div>
       </div>
       {/* Download Settings Modal */}
       {showDownloadModal && (
         <div className="modal-overlay">
-          <div className="modal-card">
+          <div
+            className={`modal-card ${
+              theme === 'dark'
+                ? 'bg-[#2d2d2d] border-gray-600 text-white'
+                : 'bg-white border-gray-300 text-gray-900'
+            }`}
+            style={
+              theme === 'dark'
+                ? {
+                    boxShadow: '0 4px 32px 0 rgba(0,0,0,0.85)',
+                    border: '1.5px solid #444',
+                  }
+                : {}
+            }
+          >
             <button
-              className="modal-close-btn"
+              className={`modal-close-btn ${
+                theme === 'dark'
+                  ? 'text-white hover:text-[#00A5B5]'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
               aria-label="Close download modal"
               onClick={() => setShowDownloadModal(false)}
             >
               ×
             </button>
-            <h2 className="modal-title">Download Canvas</h2>
-            <div className="modal-options">
-              <label className={`modal-radio-label${downloadFormat === "svg" ? " selected" : ""}`}> 
+            <h2
+              className={`modal-title font-semibold text-lg mb-2 ${
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}
+            >
+              Download Canvas
+            </h2>
+            <div className="modal-options flex gap-3 mb-4">
+              <label
+                className={`modal-radio-label flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition border font-medium ${
+                  downloadFormat === 'svg'
+                    ? 'bg-[#00A5B5] text-white border-[#00A5B5] shadow'
+                    : theme === 'dark'
+                    ? 'bg-[#3a3a3a] text-white border-gray-600 hover:bg-[#444]'
+                    : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
+                }`}
+              >
                 <input
                   type="radio"
                   name="format"
                   value="svg"
-                  checked={downloadFormat === "svg"}
-                  onChange={() => setDownloadFormat("svg")}
+                  checked={downloadFormat === 'svg'}
+                  onChange={() => setDownloadFormat('svg')}
                   aria-label="SVG format"
+                  className="accent-[#00A5B5] mr-2"
                 />
-                <span className="modal-radio-icon">🖼️</span> SVG
+                <span className="modal-radio-icon">🖼️</span>
+                <span className="font-semibold">SVG</span>
               </label>
-              <label className={`modal-radio-label${downloadFormat === "png" ? " selected" : ""}`}> 
+              <label
+                className={`modal-radio-label flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition border font-medium ${
+                  downloadFormat === 'png'
+                    ? 'bg-[#00A5B5] text-white border-[#00A5B5] shadow'
+                    : theme === 'dark'
+                    ? 'bg-[#3a3a3a] text-white border-gray-600 hover:bg-[#444]'
+                    : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
+                }`}
+              >
                 <input
                   type="radio"
                   name="format"
                   value="png"
-                  checked={downloadFormat === "png"}
-                  onChange={() => setDownloadFormat("png")}
+                  checked={downloadFormat === 'png'}
+                  onChange={() => setDownloadFormat('png')}
                   aria-label="PNG format"
+                  className="accent-[#00A5B5] mr-2"
                 />
-                <span className="modal-radio-icon">📄</span> PNG
+                <span className="modal-radio-icon">📄</span>
+                <span className="font-semibold">PNG</span>
               </label>
             </div>
-            <div className="modal-actions">
+            <div className="modal-actions flex gap-2 mt-2">
               <button
-                className="modal-btn cancel"
+                className={`modal-btn cancel px-4 py-2 rounded font-medium transition border ${
+                  theme === 'dark'
+                    ? 'bg-[#3a3a3a] text-white border-gray-600 hover:bg-[#444]'
+                    : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
+                }`}
                 onClick={() => setShowDownloadModal(false)}
                 aria-label="Cancel download"
               >
                 Cancel
               </button>
               <button
-                className="modal-btn confirm"
+                className={`modal-btn confirm px-4 py-2 rounded font-semibold transition border ${
+                  theme === 'dark'
+                    ? 'bg-[#00A5B5] text-white border-[#00A5B5] hover:bg-[#00959f]'
+                    : 'bg-[#00A5B5] text-white border-[#00A5B5] hover:bg-[#00959f]'
+                }`}
                 onClick={() => {
                   setShowDownloadModal(false);
                   downloadCanvas(downloadFormat);

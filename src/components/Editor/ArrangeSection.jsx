@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FaLock, FaLockOpen, FaPalette, FaSlidersH, FaTrash, FaArrowsAltV, FaLayerGroup, FaSun, FaRedo, FaBullseye } from "react-icons/fa";
+import { useTheme } from "../../context/ThemeContext";
 
 const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape, setShapes, shapes, duplicateShape, canvasSize, setSelectedShape, canvasBg, setCanvasBg }) => {
+  const { theme } = useTheme();
   const [isShadowExpanded, setIsShadowExpanded] = useState(false);
   const [colorMode, setColorMode] = useState("color");
   const [selectedStopIdx, setSelectedStopIdx] = useState(0);
@@ -139,26 +141,42 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
       ];
 
   return (
-    <div className="flex h-full bg-white w-full justify-end ">
+    <div className={`flex h-full w-full justify-end ${theme === 'dark' ? 'bg-[#2d2d2d]' : 'bg-white'}`}>
       {/* Vertical Tabs */}
       
       {/* Section Content */}
-      <div className="flex-1 p-2 flex flex-col gap-4 h-full overflow-y-auto bg-gray-200" style={{maxWidth: 320}}>
+      <div className={`flex-1 p-2 flex flex-col gap-4 h-full overflow-y-auto ${
+        theme === 'dark' ? 'bg-[#2d2d2d]' : 'bg-gray-200'
+      }`} style={{maxWidth: 320}}>
         {/* Each section is a card */}
         {activeSection === "fill" && selectedShape && (
-          <div className="rounded-xl border border-gray-200 bg-gray-50 shadow-sm p-4 flex flex-col gap-4 w-full max-w-[320px] mx-auto">
+          <div className={`rounded-xl border shadow-sm p-4 flex flex-col gap-4 w-full max-w-[320px] mx-auto ${
+            theme === 'dark' 
+              ? 'border-gray-600 bg-[#3a3a3a] text-white' 
+              : 'border-gray-200 bg-gray-50 text-gray-900'
+          }`}>
             <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold text-gray-700 text-base">Fill</span>
-              <div className="flex items-center bg-gray-200 rounded-full p-1">
+              <span className={`font-semibold text-base ${theme === 'dark' ? 'text-white' : 'text-gray-700'}`}>Fill</span>
+              <div className={`flex items-center rounded-full p-1 ${
+                theme === 'dark' ? 'bg-[#2d2d2d]' : 'bg-gray-200'
+              }`}>
                 <button
-                  className={`px-3 py-1 rounded-full transition text-xs ${colorMode === "color" ? "bg-white shadow text-blue-600" : "text-gray-500"}`}
+                  className={`px-3 py-1 rounded-full transition text-xs ${
+                    colorMode === "color" 
+                      ? theme === 'dark' ? "bg-[#00A5B5] shadow text-white" : "bg-white shadow text-[#00A5B5]"
+                      : theme === 'dark' ? "text-gray-300" : "text-gray-500"
+                  }`}
                   onClick={() => handleColorModeChange("color")}
                   type="button"
                 >
                   Solid
                 </button>
                 <button
-                  className={`px-3 py-1 rounded-full transition text-xs ${colorMode === "gradient" ? "bg-white shadow text-blue-600" : "text-gray-500"}`}
+                  className={`px-3 py-1 rounded-full transition text-xs ${
+                    colorMode === "gradient" 
+                      ? theme === 'dark' ? "bg-[#00A5B5] shadow text-white" : "bg-white shadow text-[#00A5B5]"
+                      : theme === 'dark' ? "text-gray-300" : "text-gray-500"
+                  }`}
                   onClick={() => handleColorModeChange("gradient")}
                   type="button"
                 >
@@ -169,7 +187,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
             {colorMode === "color" && selectedShape && (
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-600">Color:</span>
+              <span className={`text-xs ${theme === 'dark' ? 'text-gray-200' : 'text-gray-600'}`}>Color:</span>
                   <label className="relative cursor-pointer">
                     <span
                       className="w-7 h-7 rounded-full border-2 border-gray-300 inline-block"
@@ -192,7 +210,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 </div>
                 {/* Opacity Control */}
                 <div className="flex items-center gap-2">
-                  <label className="block text-xs font-medium text-gray-700 w-16">Opacity</label>
+              <label className={`block text-xs font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'} w-16`}>Opacity</label>
                   <input
                     type="range"
                     min="0"
@@ -220,16 +238,16 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                         setShapes([...shapes]);
                       }
                     }}
-                    className="w-12 border rounded px-2 py-1 text-xs ml-2"
+                    className={`w-12 border rounded px-2 py-1 text-xs ml-2 ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                     aria-label="Opacity value"
                   />
-                  <span className="w-8 text-right text-xs text-gray-500">{((selectedShape.opacity !== undefined ? selectedShape.opacity : 1) * 100).toFixed(0)}%</span>
+              <span className={`w-8 text-right text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{((selectedShape.opacity !== undefined ? selectedShape.opacity : 1) * 100).toFixed(0)}%</span>
                 </div>
               </div>
             )}
             {colorMode === "gradient" && selectedShape && (
-              <div className="gradient-control p-2 border rounded bg-white mt-2">
-                <label className="block text-xs font-medium text-gray-700 mb-1">Gradient Editor</label>
+              <div className={`gradient-control p-2 border rounded mt-2 ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600' : 'bg-white border-gray-200'}`}>
+            <label className={`block text-xs font-medium mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-700'}`}>Gradient Editor</label>
                 {selectedShape.gradient && selectedShape.gradient.length > 0 && (
                   <>
                     {/* Gradient Bar with Stops */}
@@ -324,7 +342,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                     </div>
                     {/* Color Picker for Selected Stop */}
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs text-gray-500">Selected Stop:</span>
+                  <span className={`text-xs ${theme === 'dark' ? 'text-gray-200' : 'text-gray-500'}`}>Selected Stop:</span>
                       <label className="relative cursor-pointer">
                         <span
                           className="w-7 h-7 rounded-full border-2 border-gray-300 inline-block"
@@ -360,13 +378,13 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                           stops[selectedStopIdx].offset = parseFloat(val.toFixed(2));
                           setShapes([...shapes]);
                         }}
-                        className="w-16 border rounded px-2 py-1 text-xs"
+                        className={`w-16 border rounded px-2 py-1 text-xs ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                       />
-                      <span className="text-xs text-gray-500">Offset</span>
+                  <span className={`text-xs ${theme === 'dark' ? 'text-gray-200' : 'text-gray-500'}`}>Offset</span>
                     </div>
                     {/* Gradient Angle */}
                     <div className="flex items-center gap-2 mb-2">
-                      <label className="block text-xs font-medium text-gray-700 w-20">Angle</label>
+                  <label className={`block text-xs font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'} w-20`}>Angle</label>
                       <input
                         type="range"
                         min={0}
@@ -394,15 +412,15 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                             setShapes([...shapes]);
                           }
                         }}
-                        className="w-14 border rounded px-2 py-1 text-xs ml-2"
+                        className={`w-14 border rounded px-2 py-1 text-xs ml-2 ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                         aria-label="Gradient angle in degrees"
                       />
-                      <span className="w-8 text-right text-xs text-gray-500">°</span>
+                      <span className={`w-8 text-right text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>°</span>
                     </div>
                     {/* Live preview */}
                     <div className="h-5 w-full rounded mt-2 border" style={{ background: getGradientBarBg() }} />
                     <button
-                      className="bg-gray-400 text-white px-3 py-1 rounded text-xs mt-2"
+                      className={`px-3 py-1 rounded text-xs mt-2 ${theme === 'dark' ? 'bg-[#444] text-white hover:bg-[#00A5B5]' : 'bg-gray-400 text-white hover:bg-[#00A5B5]'}`}
                       onClick={() => {
                         if (selectedShape) {
                           selectedShape.gradient = null;
@@ -415,7 +433,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                     </button>
                     {/* Opacity Control for Gradient */}
                     <div className="flex items-center gap-2 mt-3">
-                      <label className="block text-xs font-medium text-gray-700 w-16">Opacity</label>
+                      <label className={`block text-xs font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'} w-16`}>Opacity</label>
                       <input
                         type="range"
                         min="0"
@@ -446,7 +464,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                         className="w-12 border rounded px-2 py-1 text-xs ml-2"
                         aria-label="Opacity value"
                       />
-                      <span className="w-8 text-right text-xs text-gray-500">{((selectedShape.opacity !== undefined ? selectedShape.opacity : 1) * 100).toFixed(0)}%</span>
+                      <span className={`w-8 text-right text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{((selectedShape.opacity !== undefined ? selectedShape.opacity : 1) * 100).toFixed(0)}%</span>
                     </div>
                   </>
                 )}
@@ -455,11 +473,19 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
           </div>
         )}
         {activeSection === "resize" && selectedShape && (
-          <div className="rounded-xl border border-gray-200 bg-gray-50 shadow-sm p-4 flex flex-col gap-4 w-full max-w-[320px] mx-auto">
+          <div className={`rounded-xl border shadow-sm p-4 flex flex-col gap-4 w-full max-w-[320px] mx-auto ${
+            theme === 'dark' 
+              ? 'border-gray-600 bg-[#3a3a3a]' 
+              : 'border-gray-200 bg-gray-50'
+          }`}>
             <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold text-gray-700 text-base">Size & Position</span>
+              <span className={`font-semibold text-base ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Size & Position</span>
               <button
-                className={`ml-2 px-2 py-1 rounded transition border ${lockRatio ? "bg-blue-100 border-blue-400" : "bg-gray-100 border-gray-300"}`}
+                className={`ml-2 px-2 py-1 rounded transition border ${
+                  lockRatio 
+                    ? theme === 'dark' ? "bg-[#00A5B5] border-[#00A5B5] text-white" : "bg-blue-100 border-blue-400"
+                    : theme === 'dark' ? "bg-[#2d2d2d] border-gray-600 text-gray-300" : "bg-gray-100 border-gray-300"
+                }`}
                 title={lockRatio ? "Unlock aspect ratio" : "Lock aspect ratio"}
                 onClick={() => setLockRatio(l => !l)}
                 type="button"
@@ -469,7 +495,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
             </div>
             {/* Position X */}
             <div className="flex items-center gap-2 mb-2">
-              <label className="w-14 text-xs text-gray-600">X</label>
+              <label className={`w-14 text-xs ${theme === 'dark' ? 'text-gray-200' : 'text-gray-600'}`}>X</label>
               <input
                 type="range"
                 min="0"
@@ -497,14 +523,14 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                   selectedShape.x = (percent / 100) * canvasSize.width;
                   setShapes([...shapes]);
                 }}
-                className="w-16 border rounded px-2 py-1 text-xs ml-2"
+                className={`w-16 border rounded px-2 py-1 text-xs ml-2 ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 aria-label="X position in %"
               />
-              <span className="text-xs text-gray-400 ml-1">%</span>
+              <span className={`text-xs ml-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-400'}`}>%</span>
             </div>
             {/* Position Y */}
             <div className="flex items-center gap-2 mb-2">
-              <label className="w-14 text-xs text-gray-600">Y</label>
+              <label className={`w-14 text-xs ${theme === 'dark' ? 'text-gray-200' : 'text-gray-600'}`}>Y</label>
               <input
                 type="range"
                 min="0"
@@ -532,14 +558,14 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                   selectedShape.y = (percent / 100) * canvasSize.height;
                   setShapes([...shapes]);
                 }}
-                className="w-16 border rounded px-2 py-1 text-xs ml-2"
+                className={`w-16 border rounded px-2 py-1 text-xs ml-2 ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 aria-label="Y position in %"
               />
-              <span className="text-xs text-gray-400 ml-1">%</span>
+              <span className={`text-xs ml-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-400'}`}>%</span>
             </div>
             {/* Width */}
             <div className="flex items-center gap-2 mb-2">
-              <label className="w-14 text-xs text-gray-600">Width</label>
+              <label className={`w-14 text-xs ${theme === 'dark' ? 'text-gray-200' : 'text-gray-600'}`}>Width</label>
               <input
                 type="number"
                 min="1"
@@ -566,14 +592,14 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                     );
                   }
                 }}
-                className="w-16 border rounded px-2 py-1 text-xs ml-2"
+                className={`w-16 border rounded px-2 py-1 text-xs ml-2 ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 aria-label="Width in %"
               />
-              <span className="text-xs text-gray-400 ml-1">%</span>
+              <span className={`text-xs ml-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-400'}`}>%</span>
             </div>
             {/* Height */}
             <div className="flex items-center gap-2 mb-2">
-              <label className="w-14 text-xs text-gray-600">Height</label>
+              <label className={`w-14 text-xs ${theme === 'dark' ? 'text-gray-200' : 'text-gray-600'}`}>Height</label>
               <input
                 type="number"
                 min="1"
@@ -600,14 +626,14 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                     );
                   }
                 }}
-                className="w-16 border rounded px-2 py-1 text-xs ml-2"
+                className={`w-16 border rounded px-2 py-1 text-xs ml-2 ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 aria-label="Height in %"
               />
-              <span className="text-xs text-gray-400 ml-1">%</span>
+              <span className={`text-xs ml-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-400'}`}>%</span>
             </div>
             {/* Rotation */}
             <div className="flex items-center gap-2 mb-2">
-              <label className="w-14 text-xs text-gray-600">Rotation</label>
+              <label className={`w-14 text-xs ${theme === 'dark' ? 'text-gray-200' : 'text-gray-600'}`}>Rotation</label>
               <input
                 type="range"
                 min={0}
@@ -633,17 +659,21 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                   selectedShape.rotation = (deg * Math.PI) / 180;
                   setShapes([...shapes]);
                 }}
-                className="w-14 border rounded px-2 py-1 text-xs ml-2"
+                className={`w-14 border rounded px-2 py-1 text-xs ml-2 ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 aria-label="Rotation in degrees"
               />
-              <span className="w-10 text-right text-xs text-gray-500">°</span>
+              <span className={`w-10 text-right text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>°</span>
             </div>
           </div>
         )}
         {activeSection === "shadow" && selectedShape && (
-          <div className="rounded-xl border border-gray-200 bg-gray-50 shadow-sm p-4 flex flex-col gap-4 w-full max-w-[320px] mx-auto">
+          <div className={`rounded-xl border shadow-sm p-4 flex flex-col gap-4 w-full max-w-[320px] mx-auto ${
+            theme === 'dark' 
+              ? 'border-gray-600 bg-[#3a3a3a]' 
+              : 'border-gray-200 bg-gray-50'
+          }`}>
             <div className="flex items-center mb-2">
-              <label className="text-xs font-medium text-gray-700 mr-2">Enable Shadow</label>
+              <label className={`text-xs font-medium mr-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Enable Shadow</label>
               <input
                 type="checkbox"
                 checked={!!selectedShape.shadow}
@@ -670,7 +700,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
             {!!selectedShape.shadow && <>
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-2">
-                  <label className="block text-xs font-medium text-gray-700 w-16">Opacity</label>
+                  <label className={`block text-xs font-medium w-16 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Opacity</label>
                   <input
                     type="range"
                     min="0"
@@ -696,13 +726,13 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                       selectedShape.shadow.opacity = val;
                       setShapes([...shapes]);
                     }}
-                    className="w-12 border rounded px-2 py-1 text-xs ml-2"
+                    className={`w-12 border rounded px-2 py-1 text-xs ml-2 ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                     aria-label="Shadow opacity"
                   />
-                  <span className="w-8 text-right text-xs text-gray-500">{((selectedShape.shadow?.opacity ?? 1) * 100).toFixed(0)}%</span>
+                  <span className={`w-8 text-right text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{((selectedShape.shadow?.opacity ?? 1) * 100).toFixed(0)}%</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="block text-xs font-medium text-gray-700 w-16">Color</label>
+                  <label className={`block text-xs font-medium w-16 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Color</label>
                   <label className="relative cursor-pointer">
                     <span
                       className="w-7 h-7 rounded-full border-2 border-gray-300 inline-block"
@@ -723,7 +753,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                   </label>
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="block text-xs font-medium text-gray-700 w-16">Blur</label>
+                  <label className={`block text-xs font-medium w-16 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Blur</label>
                   <input
                     type="range"
                     min="0"
@@ -749,13 +779,13 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                       selectedShape.shadow.blur = val;
                       setShapes([...shapes]);
                     }}
-                    className="w-12 border rounded px-2 py-1 text-xs ml-2"
+                    className={`w-12 border rounded px-2 py-1 text-xs ml-2 ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                     aria-label="Shadow blur"
                   />
-                  <span className="w-8 text-right text-xs text-gray-500">{selectedShape.shadow?.blur ?? 0}</span>
+                  <span className={`w-8 text-right text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{selectedShape.shadow?.blur ?? 0}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="block text-xs font-medium text-gray-700 w-16">Offset X</label>
+                  <label className={`block text-xs font-medium w-16 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Offset X</label>
                   <input
                     type="range"
                     min="-100"
@@ -781,13 +811,13 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                       selectedShape.shadow.offsetX = val;
                       setShapes([...shapes]);
                     }}
-                    className="w-12 border rounded px-2 py-1 text-xs ml-2"
+                    className={`w-12 border rounded px-2 py-1 text-xs ml-2 ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                     aria-label="Shadow offset X"
                   />
-                  <span className="w-8 text-right text-xs text-gray-500">{selectedShape.shadow?.offsetX ?? 0}</span>
+                  <span className={`w-8 text-right text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{selectedShape.shadow?.offsetX ?? 0}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="block text-xs font-medium text-gray-700 w-16">Offset Y</label>
+                  <label className={`block text-xs font-medium w-16 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Offset Y</label>
                   <input
                     type="range"
                     min="-100"
@@ -813,14 +843,14 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                       selectedShape.shadow.offsetY = val;
                       setShapes([...shapes]);
                     }}
-                    className="w-12 border rounded px-2 py-1 text-xs ml-2"
+                    className={`w-12 border rounded px-2 py-1 text-xs ml-2 ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                     aria-label="Shadow offset Y"
                   />
-                  <span className="w-8 text-right text-xs text-gray-500">{selectedShape.shadow?.offsetY ?? 0}</span>
+                  <span className={`w-8 text-right text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{selectedShape.shadow?.offsetY ?? 0}</span>
                 </div>
                 <div className="flex justify-end mt-1">
                   <button
-                    className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs border hover:bg-gray-300"
+                    className={`px-3 py-1 rounded text-xs border ${theme === 'dark' ? 'bg-[#3a3a3a] text-gray-200 border-gray-600 hover:bg-[#4a4a4a]' : 'bg-gray-200 text-gray-700 border-gray-300 hover:bg-gray-300'}`}
                     onClick={() => {
                       if (!selectedShape) return;
                       selectedShape.shadow = {
@@ -841,8 +871,12 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
           </div>
         )}
         {activeSection === "layer" && selectedShape && (
-          <div className="rounded-xl border border-gray-200 bg-gray-50 shadow-sm p-4 flex flex-col gap-4 items-center w-full max-w-[320px] mx-auto">
-            <span className="font-semibold text-gray-700 text-base mb-2">Actions</span>
+          <div className={`rounded-xl border shadow-sm p-4 flex flex-col gap-4 items-center w-full max-w-[320px] mx-auto ${
+            theme === 'dark' 
+              ? 'border-gray-600 bg-[#3a3a3a]' 
+              : 'border-gray-200 bg-gray-50'
+          }`}>
+            <span className={`font-semibold text-base mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Actions</span>
             <div className="flex flex-row gap-5 justify-center flex-wrap">
               {/* Duplicate */}
               <div className="flex flex-col items-center">
@@ -854,7 +888,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 >
                   <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" stroke="#2563eb" strokeWidth="2"/><rect x="2" y="2" width="13" height="13" rx="2" stroke="#2563eb" strokeWidth="2"/></svg>
                 </button>
-                <span className="text-xs text-gray-600 mt-1">Duplicate</span>
+                <span className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-600'}`}>Duplicate</span>
               </div>
               {/* Delete */}
               <div className="flex flex-col items-center">
@@ -866,7 +900,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 >
                   <FaTrash size={18} color="#ef4444" />
                 </button>
-                <span className="text-xs text-gray-600 mt-1">Delete</span>
+                <span className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-600'}`}>Delete</span>
               </div>
               {/* Center */}
               <div className="flex flex-col items-center">
@@ -884,7 +918,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 >
                   <FaBullseye className="w-5 h-5" />
                 </button>
-                <span className="text-xs text-gray-600 mt-1">Center</span>
+                <span className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-600'}`}>Center</span>
               </div>
               {/* Reset */}
               <div className="flex flex-col items-center">
@@ -905,19 +939,23 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 >
                   <FaRedo className="w-5 h-5" />
                 </button>
-                <span className="text-xs text-gray-600 mt-1">Reset</span>
+                <span className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-600'}`}>Reset</span>
               </div>
             </div>
           </div>
         )}
         {/* Canvas Section (when no shape selected) */}
         {activeSection === "canvas" && !selectedShape && (
-          <div className="rounded-xl border border-gray-200 bg-gray-50 shadow-sm p-4 flex flex-col gap-4 w-full max-w-[320px] mx-auto">
-            <span className="font-semibold text-gray-700 text-base mb-2">Canvas Background</span>
+          <div className={`rounded-xl border shadow-sm p-4 flex flex-col gap-4 w-full max-w-[320px] mx-auto ${
+            theme === 'dark' 
+              ? 'border-gray-600 bg-[#3a3a3a]' 
+              : 'border-gray-200 bg-gray-50'
+          }`}>
+            <span className={`font-semibold text-base mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Canvas Background</span>
             {/* Mode Switch */}
             <div className="flex-col items-center gap-4 mb-3">
-              <span className="font-medium text-gray-700 text-sm">Background</span>
-              <div className="flex items-center bg-gray-200 rounded-full p-1 w-full">
+              <span className={`font-medium text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Background</span>
+              <div className={`flex items-center rounded-full p-1 w-full ${theme === 'dark' ? 'bg-[#2d2d2d]' : 'bg-gray-200'}`}>
                 <button
                   className={`flex-1 px-3 py-1 rounded-full transition text-xs ${canvasBg && typeof canvasBg === 'string' && canvasBg !== 'transparent' ? "bg-white shadow text-blue-600" : "text-gray-500"}`}
                   style={{ minWidth: 0 }}
@@ -954,7 +992,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
             {/* Color Picker for Solid */}
             {canvasBg && typeof canvasBg === 'string' && canvasBg !== 'gradient' && canvasBg !== 'transparent' && (
               <div className="flex items-center gap-3 mb-2">
-                <span className="text-xs text-gray-600">Color:</span>
+                <span className={`text-xs ${theme === 'dark' ? 'text-gray-200' : 'text-gray-600'}`}>Color:</span>
                 <label className="relative cursor-pointer">
                   <span
                     className="w-7 h-7 rounded-full border-2 border-gray-300 inline-block"
@@ -973,8 +1011,8 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
             )}
             {/* Gradient Editor for Canvas */}
             {canvasBg && typeof canvasBg === 'object' && canvasBg.type === 'gradient' && (
-              <div className="gradient-control p-2 border rounded bg-white mt-2">
-                <label className="block text-xs font-medium text-gray-700 mb-1">Gradient Editor</label>
+              <div className={`gradient-control p-2 border rounded mt-2 ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600' : 'bg-white border-gray-200'}`}>
+                <label className={`block text-xs font-medium mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-700'}`}>Gradient Editor</label>
                 {/* Gradient Bar with Stops */}
                 <div
                   className="relative h-10 w-full rounded mb-3 border cursor-pointer flex items-center bg-gradient-to-r from-gray-100 to-gray-200"
@@ -1102,7 +1140,7 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                 </div>
                 {/* Color Picker for Selected Stop */}
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs text-gray-500">Selected Stop:</span>
+                  <span className={`text-xs ${theme === 'dark' ? 'text-gray-200' : 'text-gray-500'}`}>Selected Stop:</span>
                   <label className="relative cursor-pointer">
                     <span
                       className="w-7 h-7 rounded-full border-2 border-gray-300 inline-block"
@@ -1137,13 +1175,13 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                       newStops[canvasSelectedStopIdx].offset = parseFloat(val.toFixed(2));
                       setCanvasBg({ ...canvasBg, gradient: newStops });
                     }}
-                    className="w-16 border rounded px-2 py-1 text-xs"
+                    className={`w-16 border rounded px-2 py-1 text-xs ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
-                  <span className="text-xs text-gray-500">Offset</span>
+                  <span className={`text-xs ${theme === 'dark' ? 'text-gray-200' : 'text-gray-500'}`}>Offset</span>
                 </div>
                 {/* Gradient Angle */}
                 <div className="flex items-center gap-2 mb-2">
-                  <label className="block text-xs font-medium text-gray-700 w-20">Angle</label>
+                  <label className={`block text-xs font-medium w-20 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Angle</label>
                   <input
                     type="range"
                     min={0}
@@ -1165,22 +1203,30 @@ const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape
                       let val = Math.max(0, Math.min(360, parseInt(e.target.value, 10) || 0));
                       setCanvasBg({ ...canvasBg, gradientAngle: val });
                     }}
-                    className="w-14 border rounded px-2 py-1 text-xs ml-2"
+                    className={`w-14 border rounded px-2 py-1 text-xs ml-2 ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                     aria-label="Gradient angle in degrees"
                   />
-                  <span className="w-8 text-right text-xs text-gray-500">°</span>
+                  <span className={`w-8 text-right text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>°</span>
                 </div>
               </div>
             )}
           </div>
         )}
       </div>
-      <nav className="flex flex-col items-center py-6 px-1 bg-gray-400 gap-2 border-r border-gray-200 h-full min-w-[60px] max-w-[70px]">
+      <nav className={`flex flex-col items-center py-6 px-1 gap-2 border-r h-full min-w-[60px] max-w-[70px] ${
+        theme === 'dark' 
+          ? 'bg-[#3a3a3a] border-gray-600' 
+          : 'bg-gray-400 border-gray-200'
+      }`}>
         {sections.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
             onClick={() => setActiveSection(id)}
-            className={`flex flex-col items-center justify-center w-12 h-14 rounded-lg transition font-medium text-xs ${activeSection === id ? 'bg-teal-100 text-teal-800 shadow' : 'hover:bg-gray-200 text-gray-800'}`}
+            className={`flex flex-col items-center justify-center w-12 h-14 rounded-lg transition font-medium text-xs ${
+              activeSection === id 
+                ? theme === 'dark' ? 'bg-[#00A5B5] text-white shadow' : 'bg-[#00A5B5] text-white shadow'
+                : theme === 'dark' ? 'hover:bg-[#4a4a4a] text-gray-300' : 'hover:bg-gray-200 text-gray-800'
+            }`}
             title={label}
             type="button"
           >
