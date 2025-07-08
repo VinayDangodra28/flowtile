@@ -58,24 +58,24 @@ const DocsPage = () => {
     } shadow-sm overflow-hidden`}>
       <button
         onClick={() => toggleSection(id)}
-        className={`w-full flex items-center justify-between p-4 text-left transition-colors ${
+        className={`w-full flex items-center justify-between p-3 md:p-4 text-left transition-colors ${
           theme === 'dark'
             ? 'hover:bg-[#3a3a3a] text-white'
             : 'hover:bg-gray-50 text-gray-900'
         }`}
       >
-        <div className="flex items-center gap-3">
-          <Icon className="w-5 h-5 text-[#00A5B5]" />
-          <h2 className="text-lg font-semibold">{title}</h2>
+        <div className="flex items-center gap-2 md:gap-3">
+          <Icon className="w-4 h-4 md:w-5 md:h-5 text-[#00A5B5]" />
+          <h2 className="text-base md:text-lg font-semibold">{title}</h2>
         </div>
         {openSections[id] ? (
-          <ChevronDown className="w-5 h-5" />
+          <ChevronDown className="w-4 h-4 md:w-5 md:h-5" />
         ) : (
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
         )}
       </button>
       {openSections[id] && (
-        <div className={`p-4 border-t ${
+        <div className={`p-3 md:p-4 border-t ${
           theme === 'dark' 
             ? 'border-gray-600 bg-[#242424]' 
             : 'border-gray-200 bg-gray-50'
@@ -87,26 +87,26 @@ const DocsPage = () => {
   );
 
   const FeatureCard = ({ icon: Icon, title, description, features }) => (
-    <div className={`rounded-lg border p-4 ${
+    <div className={`rounded-lg border p-3 md:p-4 ${
       theme === 'dark'
         ? 'border-gray-600 bg-[#3a3a3a]'
         : 'border-gray-200 bg-white'
     }`}>
-      <div className="flex items-center gap-3 mb-3">
-        <Icon className="w-5 h-5 text-[#00A5B5]" />
-        <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+      <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+        <Icon className="w-4 h-4 md:w-5 md:h-5 text-[#00A5B5] flex-shrink-0" />
+        <h3 className={`font-semibold text-sm md:text-base ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
           {title}
         </h3>
       </div>
-      <p className={`text-sm mb-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+      <p className={`text-xs md:text-sm mb-2 md:mb-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
         {description}
       </p>
       {features && (
-        <ul className={`text-sm space-y-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+        <ul className={`text-xs md:text-sm space-y-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
           {features.map((feature, index) => (
-            <li key={index} className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-[#00A5B5] rounded-full flex-shrink-0"></span>
-              {feature}
+            <li key={index} className="flex items-start gap-2">
+              <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-[#00A5B5] rounded-full flex-shrink-0 mt-1.5"></span>
+              <span>{feature}</span>
             </li>
           ))}
         </ul>
@@ -115,11 +115,11 @@ const DocsPage = () => {
   );
 
   const KeyboardShortcut = ({ keys, description }) => (
-    <div className="flex items-center justify-between py-2">
-      <span className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between py-2 gap-2">
+      <span className={`text-sm md:text-base ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
         {description}
       </span>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 flex-wrap">
         {keys.map((key, index) => (
           <React.Fragment key={index}>
             <kbd className={`px-2 py-1 text-xs font-mono rounded ${
@@ -144,39 +144,39 @@ const DocsPage = () => {
           ? 'border-gray-700 bg-[#242424]' 
           : 'border-gray-200 bg-white'
       }`}>
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-[#00A5B5] to-[#00859A] rounded-xl flex items-center justify-center">
-              <LayoutPanelTop className="w-6 h-6 text-white" />
+        <div className="container mx-auto px-4 md:px-6 py-6 md:py-8">
+          <div className="flex items-start md:items-center gap-3 md:gap-4 mb-3 md:mb-4">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[#00A5B5] to-[#00859A] rounded-xl flex items-center justify-center flex-shrink-0">
+              <LayoutPanelTop className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
             <div>
-              <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              <h1 className={`text-2xl md:text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 FlowTile Documentation
               </h1>
-              <p className={`text-lg ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p className={`text-base md:text-lg ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                 Complete guide to the FlowTile visual design editor
               </p>
             </div>
           </div>
-          <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+          <div className={`text-xs md:text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
             Learn how to create stunning visual designs with our powerful shape editor and grid system
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-6 py-8 max-w-4xl">
-        <div className="space-y-6">
+      <div className="container mx-auto px-4 md:px-6 py-6 md:py-8 max-w-4xl">
+        <div className="space-y-4 md:space-y-6">
           
           {/* Getting Started */}
           <SectionHeader id="getting-started" title="Getting Started" icon={Settings}>
             <div className="space-y-4">
-              <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                {/* FlowTile is a powerful visual design editor that allows you to create, arrange, and export geometric shapes 
+              <p className={`text-sm md:text-base ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                FlowTile is a powerful visual design editor that allows you to create, arrange, and export geometric shapes 
                 and designs. Whether you're creating patterns, layouts, or artistic compositions, FlowTile provides the tools 
-                you need to bring your vision to life. */}
+                you need to bring your vision to life.
               </p>
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <FeatureCard
                   icon={LayoutPanelTop}
                   title="Shape Creation"

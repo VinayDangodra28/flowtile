@@ -13,6 +13,7 @@ import { saveProject as saveProjectModel, loadProject as loadProjectModel, listP
 import { FaUndo, FaRedo, FaFileExport, FaFileImport, FaDownload, FaSave, FaFolderOpen, FaImage } from "react-icons/fa";
 import { useTheme } from "../../context/ThemeContext";
 import { useProject } from "../../context/ProjectContext";
+import { Maximize2 } from "lucide-react";
 
 const Editor = () => {
   const { projectName } = useParams();
@@ -543,7 +544,6 @@ const Editor = () => {
     if (canvasBg && typeof canvasBg === 'object' && canvasBg.type === 'gradient') {
       // SVG gradient background
       const gradId = 'canvasBgGrad';
-      const angle = (typeof canvasBg.gradientAngle === 'number' ? canvasBg.gradientAngle : 45) * Math.PI / 180;
       const halfDiag = Math.sqrt(canvasSize.width * canvasSize.width + canvasSize.height * canvasSize.height) / 2;
       const cx = canvasSize.width / 2, cy = canvasSize.height / 2;
       const dx = Math.cos(angle) * halfDiag;

@@ -272,32 +272,57 @@ const ProjectList = () => {
     </div>
   );
 
+  // Mobile warning component
+  const MobileWarning = () => (
+    <div className="md:hidden h-full flex items-center justify-center p-8">
+      <div className="text-center max-w-md mx-auto">
+        <div className="mb-6">
+          <Maximize2 className="w-16 h-16 mx-auto text-red-500 mb-4" />
+        </div>
+        <h2 className={`text-2xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          Desktop Required
+        </h2>
+        <p className={`text-lg mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+          The Projects page requires a desktop or tablet device for the best experience.
+        </p>
+        <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+          Please visit this page on a larger screen to manage your projects.
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#242424]' : 'bg-gradient-to-br from-gray-50 to-gray-100'}`}>
-      {/* Header */}
-      <div className={`${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-700' : 'bg-white border-gray-200'} border-b`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>My Projects</h1>
-              <p className={`mt-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Create and manage your FlowTile designs</p>
-            </div>
-            <div className="flex gap-3">
-              
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 shadow-sm"
-              >
-                <Plus className="w-5 h-5" />
-                New Project
-              </button>
+      {/* Show mobile warning on small screens */}
+      <MobileWarning />
+      
+      {/* Desktop content */}
+      <div className="hidden md:block">
+        {/* Header */}
+        <div className={`${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-700' : 'bg-white border-gray-200'} border-b`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>My Projects</h1>
+                <p className={`mt-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Create and manage your FlowTile designs</p>
+              </div>
+              <div className="flex gap-3">
+                
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 shadow-sm"
+                >
+                  <Plus className="w-5 h-5" />
+                  New Project
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search and View Controls */}
         <div className="flex items-center justify-between mb-6">
           <div className="relative flex-1 max-w-md">
@@ -434,6 +459,7 @@ const ProjectList = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

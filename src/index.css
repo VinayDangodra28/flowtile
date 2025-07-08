@@ -69,7 +69,12 @@ h1 {
   display: flex;
   flex-direction: row;
 }
-
+@media screen and (max-width: 768px) {
+  h1 {
+    flex-direction: column;
+  }
+  
+}
 /* Base button styles */
 button, .btn {
   cursor: pointer;

@@ -47,7 +47,7 @@ const FeatureCard = ({ icon, title, description, colorIdx = 0 }) => {
 
   return (
     <div
-      className={`rounded-xl shadow-md hover:shadow-lg transition-all p-6 border feature-card transform hover:-translate-y-1 duration-300 border-t-4 ${theme === 'dark' ? '' : ''}`}
+      className={`rounded-xl shadow-md hover:shadow-lg transition-all p-4 md:p-6 border feature-card transform hover:-translate-y-1 duration-300 border-t-4 ${theme === 'dark' ? '' : ''}`}
       style={{
         background: theme === 'dark' ? darkBg : lightBg,
         color: theme === 'dark' ? darkText : lightText,
@@ -55,17 +55,17 @@ const FeatureCard = ({ icon, title, description, colorIdx = 0 }) => {
         borderTop: `4px solid ${borderColors[colorIdx % borderColors.length]}`
       }}
     >
-      <div className={`mb-4 inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br ${logoColors[colorIdx % logoColors.length]} text-white`}>
+      <div className={`mb-3 md:mb-4 inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br ${logoColors[colorIdx % logoColors.length]} text-white`}>
         {icon}
       </div>
       <h3
-        className="text-xl font-semibold mb-2"
+        className="text-lg md:text-xl font-semibold mb-2"
         style={{ color: theme === 'dark' ? darkText : lightText }}
       >
         {title}
       </h3>
       <p
-        className="text-base"
+        className="text-sm md:text-base"
         style={{ color: theme === 'dark' ? darkDesc : lightDesc }}
       >
         {description}
@@ -80,7 +80,7 @@ const GradientButton = ({ to, children, primary }) => {
   return (
     <Link
       to={to}
-      className={`inline-flex items-center justify-center px-6 py-3 text-base font-medium rounded-lg transition-all duration-200 transform hover:-translate-y-1 ${
+      className={`inline-flex items-center justify-center px-4 md:px-6 py-2 md:py-3 text-sm md:text-base font-medium rounded-lg transition-all duration-200 transform hover:-translate-y-1 ${
         primary 
           ? "bg-gradient-to-r from-[#00343C] to-[#00A5B5] hover:from-[#006B74] hover:to-[#82E9F0] text-white shadow-lg hover:shadow-xl" 
           : theme === 'dark' 
@@ -172,7 +172,7 @@ const Home = () => {
   return (
     <div className={`min-h-[90vh] ${theme === 'dark' ? 'bg-[#242424]' : 'bg-gradient-to-b from-[#e6fafd] via-[#f6ffff] to-[#e6fafd]'} hero-pattern`}>
       {/* Hero Section */}
-      <section className="relative pt-16 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <section className="relative pt-8 md:pt-16 pb-12 md:pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 z-0">
           {theme === 'dark' ? (
             // Solid background with minimal texture in dark mode
@@ -189,21 +189,27 @@ const Home = () => {
         </div>
 
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-16">
-            <h1 className={`text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-center flex items-center justify-center min-h-[4.5rem] sm:min-h-[5.5rem] md:min-h-[6.5rem] ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
-              Create Patterns That &nbsp;
+          <div className="text-center mb-8 md:mb-16">
+            <h1 className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 text-center justify-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+              <div className="flex flex-col md:flex-row items-center justify-center gap-2 min-h-[3.5rem] sm:min-h-[4.5rem] md:min-h-[5.5rem] lg:min-h-[6.5rem]">
+                <span>Create Patterns That</span>
+                <div className="hidden md:block">
+                  <TileBurst />
+                </div>
+              </div>
+              <div className="md:hidden mt-4">
                 <TileBurst />
-
+              </div>
             </h1>
-            <p className={`text-xl md:text-2xl max-w-3xl mx-auto mb-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+            <p className={`text-lg sm:text-xl md:text-2xl max-w-3xl mx-auto mb-3 md:mb-4 px-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
               Design seamless repeating patterns for walls, tiles, fabrics, and digital art. What you create on one tile magically appears on all connected tiles.
             </p>
-            <p className={`text-lg max-w-2xl mx-auto mb-10 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+            <p className={`text-base sm:text-lg max-w-2xl mx-auto mb-6 md:mb-10 px-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
               FlowTile's smart edge-wrapping technology ensures your patterns connect flawlessly across any surface.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center px-4">
               <GradientButton to="/editor" primary>
-                Start Creating <ArrowRight className="ml-2 h-5 w-5" />
+                Start Creating <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
               </GradientButton>
               <GradientButton to="/projects">
                 View Projects
@@ -212,7 +218,7 @@ const Home = () => {
           </div>
 
           {/* Preview Image */}
-          <div className={`relative mx-auto max-w-5xl shadow-2xl rounded-2xl overflow-hidden border ${theme === 'dark' ? 'border-gray-700 ring-1 ring-[#3a3a3a]' : 'border-gray-200'}`}>
+          <div className={`relative mx-auto max-w-5xl shadow-2xl rounded-xl md:rounded-2xl overflow-hidden border ${theme === 'dark' ? 'border-gray-700 ring-1 ring-[#3a3a3a]' : 'border-gray-200'}`}>
             <div className={`aspect-video flex items-center justify-center relative ${theme === 'dark' ? 'bg-[#1e1e1e]' : 'bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100'}`}>
               {/* Editor screenshot */}
               <div className="relative w-full h-full">
@@ -228,34 +234,34 @@ const Home = () => {
       </section>
 
       {/* How It Works Section */}
-      <section className={`py-16 px-4 sm:px-6 lg:px-8 ${theme === 'dark' ? 'bg-[#242424]' : 'bg-gradient-to-br from-[#00343C]/5 to-[#82E9F0]/5'}`}>
+      <section className={`py-12 md:py-16 px-4 sm:px-6 lg:px-8 ${theme === 'dark' ? 'bg-[#242424]' : 'bg-gradient-to-br from-[#00343C]/5 to-[#82E9F0]/5'}`}>
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className={`text-3xl font-bold mb-4 ${theme === 'dark' ? 'text-gray-50 relative inline-block' : 'text-[#00343C]'}`}>
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className={`text-2xl md:text-3xl font-bold mb-3 md:mb-4 ${theme === 'dark' ? 'text-gray-50 relative inline-block' : 'text-[#00343C]'}`}>
               How FlowTile Magic Works
               {theme === 'dark' && <span className="absolute -bottom-2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#00A5B5] to-transparent"></span>}
             </h2>
-            <p className={`text-xl max-w-2xl mx-auto ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>
+            <p className={`text-lg md:text-xl max-w-2xl mx-auto px-4 ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>
               Discover the seamless edge technology that makes patterns connect perfectly across any surface.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-            <div className="space-y-24">
-              <div className="flex items-start gap-6 min-h-[400px]" data-step="1">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-start">
+            <div className="space-y-12 md:space-y-24">
+              <div className="flex items-start gap-4 md:gap-6 min-h-[300px] md:min-h-[400px]" data-step="1">
                 <div className="relative">
-                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#00343C] to-[#00A5B5] rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[#00343C] to-[#00A5B5] rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base">
                     1
                   </div>
-                  <div className={`absolute left-1/2 top-full h-24 w-0.5 bg-gradient-to-b ${theme === 'dark' ? 'from-[#00A5B5]/70' : 'from-[#00A5B5]'} to-transparent`}></div>
+                  <div className={`absolute left-1/2 top-full h-16 md:h-24 w-0.5 bg-gradient-to-b ${theme === 'dark' ? 'from-[#00A5B5]/70' : 'from-[#00A5B5]'} to-transparent`}></div>
                 </div>
                 <div className="flex-1">
-                  <h3 className={`text-xl font-semibold mb-3 ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>Design on Your Canvas</h3>
-                  <p className={`mb-4 ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Start with a single tile canvas. Add shapes, upload images, or create custom designs using our intuitive editor.</p>
-                  <div className="space-y-4">
-                    <div className={`rounded-lg p-4 shadow-sm border ${theme === 'dark' ? 'bg-[#2d2d2d] border-[#374151]' : 'bg-white border-[#82E9F0]/20'}`}>
-                      <h4 className={`font-medium mb-2 ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>✨ What happens in this step:</h4>
-                      <ul className={`text-sm space-y-1 ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>
+                  <h3 className={`text-lg md:text-xl font-semibold mb-2 md:mb-3 ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>Design on Your Canvas</h3>
+                  <p className={`mb-3 md:mb-4 text-sm md:text-base ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Start with a single tile canvas. Add shapes, upload images, or create custom designs using our intuitive editor.</p>
+                  <div className="space-y-3 md:space-y-4">
+                    <div className={`rounded-lg p-3 md:p-4 shadow-sm border ${theme === 'dark' ? 'bg-[#2d2d2d] border-[#374151]' : 'bg-white border-[#82E9F0]/20'}`}>
+                      <h4 className={`font-medium mb-2 text-sm md:text-base ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>✨ What happens in this step:</h4>
+                      <ul className={`text-xs md:text-sm space-y-1 ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>
                         <li>• Create your design on a single tile</li>
                         <li>• Add basic shapes like circles, squares, triangles</li>
                         <li>• Upload your own images and graphics</li>
@@ -263,23 +269,32 @@ const Home = () => {
                       </ul>
                     </div>
                   </div>
+                  {/* Mobile image for step 1 */}
+                  <div className="lg:hidden mt-4">
+                    <div className={`relative aspect-square rounded-lg overflow-hidden border-2 max-w-xs mx-auto ${theme === 'dark' ? 'border-[#00A5B5]/10' : 'border-[#00A5B5]/20'}`}>
+                      <img src="/step_1.png" alt="Design Canvas - Add shapes to your tile" className="w-full h-full object-contain" />
+                      <div className={`absolute top-2 left-2 px-2 py-1 rounded text-xs font-medium ${theme === 'dark' ? 'bg-[#00A5B5]/80' : 'bg-[#00A5B5]'} text-white`}>
+                        Step 1
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-6 min-h-[400px]" data-step="2">
+              <div className="flex items-start gap-4 md:gap-6 min-h-[300px] md:min-h-[400px]" data-step="2">
                 <div className="relative">
-                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#00A5B5] to-[#006B74] rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[#00A5B5] to-[#006B74] rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base">
                     2
                   </div>
-                  <div className={`absolute left-1/2 top-full h-24 w-0.5 bg-gradient-to-b ${theme === 'dark' ? 'from-[#006B74]/70' : 'from-[#006B74]'} to-transparent`}></div>
+                  <div className={`absolute left-1/2 top-full h-16 md:h-24 w-0.5 bg-gradient-to-b ${theme === 'dark' ? 'from-[#006B74]/70' : 'from-[#006B74]'} to-transparent`}></div>
                 </div>
                 <div className="flex-1">
-                  <h3 className={`text-xl font-semibold mb-3 ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>Smart Edge Wrapping</h3>
-                  <p className={`mb-4 ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Every shape you create automatically appears at all 8 surrounding positions, creating seamless edge connections. Move a shape near an edge to see it wrap to the opposite side.</p>
-                  <div className="space-y-4">
-                    <div className={`rounded-lg p-4 shadow-sm border ${theme === 'dark' ? 'bg-[#2d2d2d] border-[#374151]' : 'bg-white border-[#82E9F0]/20'}`}>
-                      <h4 className={`font-medium mb-2 ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>🔄 Watch the magic happen:</h4>
-                      <ul className={`text-sm space-y-1 ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>
+                  <h3 className={`text-lg md:text-xl font-semibold mb-2 md:mb-3 ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>Smart Edge Wrapping</h3>
+                  <p className={`mb-3 md:mb-4 text-sm md:text-base ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Every shape you create automatically appears at all 8 surrounding positions, creating seamless edge connections. Move a shape near an edge to see it wrap to the opposite side.</p>
+                  <div className="space-y-3 md:space-y-4">
+                    <div className={`rounded-lg p-3 md:p-4 shadow-sm border ${theme === 'dark' ? 'bg-[#2d2d2d] border-[#374151]' : 'bg-white border-[#82E9F0]/20'}`}>
+                      <h4 className={`font-medium mb-2 text-sm md:text-base ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>🔄 Watch the magic happen:</h4>
+                      <ul className={`text-xs md:text-sm space-y-1 ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>
                         <li>• Shapes automatically appear on opposite edges</li>
                         <li>• Elements crossing boundaries wrap seamlessly</li>
                         <li>• Real-time preview of edge connections</li>
@@ -287,23 +302,32 @@ const Home = () => {
                       </ul>
                     </div>
                   </div>
+                  {/* Mobile image for step 2 */}
+                  <div className="lg:hidden mt-4">
+                    <div className={`relative aspect-square rounded-lg overflow-hidden border-2 max-w-xs mx-auto ${theme === 'dark' ? 'border-[#00A5B5]/10' : 'border-[#00A5B5]/20'}`}>
+                      <img src="/step_2.png" alt="Edge Wrapping - Elements wrap to opposite sides" className="w-full h-full object-contain" />
+                      <div className={`absolute top-2 left-2 px-2 py-1 rounded text-xs font-medium ${theme === 'dark' ? 'bg-[#006B74]/80' : 'bg-[#006B74]'} text-white`}>
+                        Step 2
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-6 min-h-[400px]" data-step="3">
+              <div className="flex items-start gap-4 md:gap-6 min-h-[300px] md:min-h-[400px]" data-step="3">
                 <div className="relative">
-                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#006B74] to-[#00A5B5] rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[#006B74] to-[#00A5B5] rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base">
                     3
                   </div>
-                  <div className={`absolute left-1/2 top-full h-24 w-0.5 bg-gradient-to-b ${theme === 'dark' ? 'from-[#00A5B5]/70' : 'from-[#00A5B5]'} to-transparent`}></div>
+                  <div className={`absolute left-1/2 top-full h-16 md:h-24 w-0.5 bg-gradient-to-b ${theme === 'dark' ? 'from-[#00A5B5]/70' : 'from-[#00A5B5]'} to-transparent`}></div>
                 </div>
                 <div className="flex-1">
-                  <h3 className={`text-xl font-semibold mb-3 ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>Choose Tile Pattern</h3>
-                  <p className={`mb-4 ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Select between square or brick tiling patterns. Your design adapts to create perfect repetition in any layout.</p>
-                  <div className="space-y-4">
-                    <div className={`rounded-lg p-4 shadow-sm border ${theme === 'dark' ? 'bg-[#2d2d2d] border-[#374151]' : 'bg-white border-[#82E9F0]/20'}`}>
-                      <h4 className={`font-medium mb-2 ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>🔲 Pattern options:</h4>
-                      <ul className={`text-sm space-y-1 ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>
+                  <h3 className={`text-lg md:text-xl font-semibold mb-2 md:mb-3 ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>Choose Tile Pattern</h3>
+                  <p className={`mb-3 md:mb-4 text-sm md:text-base ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Select between square or brick tiling patterns. Your design adapts to create perfect repetition in any layout.</p>
+                  <div className="space-y-3 md:space-y-4">
+                    <div className={`rounded-lg p-3 md:p-4 shadow-sm border ${theme === 'dark' ? 'bg-[#2d2d2d] border-[#374151]' : 'bg-white border-[#82E9F0]/20'}`}>
+                      <h4 className={`font-medium mb-2 text-sm md:text-base ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>🔲 Pattern options:</h4>
+                      <ul className={`text-xs md:text-sm space-y-1 ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>
                         <li>• Square pattern: Perfect grid alignment</li>
                         <li>• Brick pattern: Offset rows for variety</li>
                         <li>• Instant preview of both layouts</li>
@@ -311,22 +335,31 @@ const Home = () => {
                       </ul>
                     </div>
                   </div>
+                  {/* Mobile image for step 3 */}
+                  <div className="lg:hidden mt-4">
+                    <div className={`relative aspect-square rounded-lg overflow-hidden border-2 max-w-xs mx-auto ${theme === 'dark' ? 'border-[#00A5B5]/10' : 'border-[#00A5B5]/20'}`}>
+                      <img src="/step_3.png" alt="Choose Tile Pattern - Square or brick layouts" className="w-full h-full object-contain" />
+                      <div className={`absolute top-2 left-2 px-2 py-1 rounded text-xs font-medium ${theme === 'dark' ? 'bg-[#006B74]/80' : 'bg-[#006B74]'} text-white`}>
+                        Step 3
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-6 min-h-[400px]" data-step="4">
+              <div className="flex items-start gap-4 md:gap-6 min-h-[300px] md:min-h-[400px]" data-step="4">
                 <div className="relative">
-                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#00A5B5] to-[#82E9F0] rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[#00A5B5] to-[#82E9F0] rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base">
                     4
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className={`text-xl font-semibold mb-3 ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>Generate Seamless Grid</h3>
-                  <p className={`mb-4 ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Export your pattern as a multi-tile grid to see how it repeats infinitely across any surface, maintaining perfect continuity.</p>
-                  <div className="space-y-4">
-                    <div className={`rounded-lg p-4 shadow-sm border ${theme === 'dark' ? 'bg-[#2d2d2d] border-[#374151]' : 'bg-white border-[#82E9F0]/20'}`}>
-                      <h4 className={`font-medium mb-2 ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>📥 Export options:</h4>
-                      <ul className={`text-sm space-y-1 ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>
+                  <h3 className={`text-lg md:text-xl font-semibold mb-2 md:mb-3 ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>Generate Seamless Grid</h3>
+                  <p className={`mb-3 md:mb-4 text-sm md:text-base ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Export your pattern as a multi-tile grid to see how it repeats infinitely across any surface, maintaining perfect continuity.</p>
+                  <div className="space-y-3 md:space-y-4">
+                    <div className={`rounded-lg p-3 md:p-4 shadow-sm border ${theme === 'dark' ? 'bg-[#2d2d2d] border-[#374151]' : 'bg-white border-[#82E9F0]/20'}`}>
+                      <h4 className={`font-medium mb-2 text-sm md:text-base ${theme === 'dark' ? 'text-gray-100' : 'text-[#00343C]'}`}>📥 Export options:</h4>
+                      <ul className={`text-xs md:text-sm space-y-1 ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>
                         <li>• Single tile for pattern libraries</li>
                         <li>• Multi-tile grid for visualization</li>
                         <li>• High-resolution PNG or SVG formats</li>
@@ -334,12 +367,21 @@ const Home = () => {
                       </ul>
                     </div>
                   </div>
+                  {/* Mobile image for step 4 */}
+                  <div className="lg:hidden mt-4">
+                    <div className={`relative aspect-square rounded-lg overflow-hidden border-2 max-w-xs mx-auto ${theme === 'dark' ? 'border-[#00A5B5]/10' : 'border-[#00A5B5]/20'}`}>
+                      <img src="/step_4.png" alt="Generate Seamless Grid - Export perfect patterns" className="w-full h-full object-contain" />
+                      <div className={`absolute top-2 left-2 px-2 py-1 rounded text-xs font-medium ${theme === 'dark' ? 'bg-[#00A5B5]/80' : 'bg-[#00A5B5]'} text-white`}>
+                        Step 4
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className={`lg:sticky lg:top-8 rounded-2xl shadow-xl p-6 border ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-700' : 'bg-white border-[#82E9F0]/20'}`}>
-              {/* Remove background and gradients for debugging */}
+            <div className={`hidden lg:block lg:sticky lg:top-8 rounded-xl md:rounded-2xl shadow-xl p-4 md:p-6 border ${theme === 'dark' ? 'bg-[#2d2d2d] border-gray-700' : 'bg-white border-[#82E9F0]/20'}`}>
+              {/* Live preview only visible on desktop (lg and up) */}
               <div
                 className={`relative aspect-square rounded-lg overflow-hidden border-2 ${theme === 'dark' ? 'border-[#00A5B5]/10' : 'border-[#00A5B5]/20'}`}
                 id="live-preview"
@@ -376,36 +418,28 @@ const Home = () => {
                     Step 4
                   </div>
                 </div>
-                {/* Fallback if images don't load */}
-                {/* <div className="absolute inset-0 flex items-center justify-center fallback-content" style={{ background: "none" }}>
-                  <div className="text-gray-500 text-center">
-                    <p className="text-lg font-medium">FlowTile Process</p>
-                    <p className="text-sm">Interactive step visualization</p>
-                  </div>
-                </div> */}
                 <div className={`absolute bottom-2 right-2 text-xs font-medium step-label ${theme === 'dark' ? 'text-[#82E9F0]' : 'text-[#00A5B5]'}`}>
                   Design Canvas
                 </div>
               </div>
-              {/* Removed step explanation under live preview as requested */}
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className={`py-16 px-4 sm:px-6 lg:px-8 ${theme === 'dark' ? 'bg-[#242424]' : 'bg-gray-50'}`}>
+      <section className={`py-12 md:py-16 px-4 sm:px-6 lg:px-8 ${theme === 'dark' ? 'bg-[#242424]' : 'bg-gray-50'}`}>
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className={`text-3xl font-bold mb-4 ${theme === 'dark' ? 'text-gray-50 relative inline-block' : 'text-[#00343C]'}`}>
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className={`text-2xl md:text-3xl font-bold mb-3 md:mb-4 ${theme === 'dark' ? 'text-gray-50 relative inline-block' : 'text-[#00343C]'}`}>
               Powerful Design Tools
               {theme === 'dark' && <span className="absolute -bottom-2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#82E9F0] to-transparent"></span>}
             </h2>
-            <p className={`text-xl max-w-2xl mx-auto ${theme === 'dark' ? 'text-[#82E9F0]/90' : 'text-[#00A5B5]'}`}>
+            <p className={`text-lg md:text-xl max-w-2xl mx-auto px-4 ${theme === 'dark' ? 'text-[#82E9F0]/90' : 'text-[#00A5B5]'}`}>
               Everything you need to create professional, seamless patterns.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             <FeatureCard
               icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m9 21 5-5-5-5"/></svg>}
               title="Basic Shapes & Images"
@@ -484,45 +518,45 @@ const Home = () => {
         </section> */}
 
       {/* Use Cases Section */}
-      <section className={`py-16 px-4 sm:px-6 lg:px-8 ${theme === 'dark' ? 'bg-[#242424]' : 'bg-[#e6fafd]'}`}>
+      <section className={`py-12 md:py-16 px-4 sm:px-6 lg:px-8 ${theme === 'dark' ? 'bg-[#242424]' : 'bg-[#e6fafd]'}`}>
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className={`text-3xl font-bold mb-4 ${theme === 'dark' ? 'text-gray-50 relative inline-block' : 'text-[#00343C]'}`}>
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className={`text-2xl md:text-3xl font-bold mb-3 md:mb-4 ${theme === 'dark' ? 'text-gray-50 relative inline-block' : 'text-[#00343C]'}`}>
               Perfect For
               {theme === 'dark' && <span className="absolute -bottom-2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#00A5B5] to-transparent"></span>}
             </h2>
-            <p className={`text-xl max-w-2xl mx-auto ${theme === 'dark' ? 'text-[#82E9F0]/90' : 'text-[#00A5B5]'}`}>
+            <p className={`text-lg md:text-xl max-w-2xl mx-auto px-4 ${theme === 'dark' ? 'text-[#82E9F0]/90' : 'text-[#00A5B5]'}`}>
               FlowTile creates patterns that work across many industries and applications.
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className={`rounded-xl shadow-md p-6 text-center border hover:shadow-lg transition-all transform hover:-translate-y-1 duration-300 ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#3a3a3a]' : 'bg-white border-[#00A5B5]'}`}>
-              <div className="w-12 h-12 bg-gradient-to-br from-[#00343C] to-[#00A5B5] rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-white"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            <div className={`rounded-xl shadow-md p-4 md:p-6 text-center border hover:shadow-lg transition-all transform hover:-translate-y-1 duration-300 ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#3a3a3a]' : 'bg-white border-[#00A5B5]'}`}>
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[#00343C] to-[#00A5B5] rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 md:w-6 md:h-6 text-white"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
               </div>
-              <h3 className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-gray-50' : 'text-[#00343C]'}`}>Wall Tiles</h3>
-              <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Design ceramic, stone, and decorative wall tile patterns</p>
+              <h3 className={`text-base md:text-lg font-medium mb-1 md:mb-2 ${theme === 'dark' ? 'text-gray-50' : 'text-[#00343C]'}`}>Wall Tiles</h3>
+              <p className={`text-xs md:text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Design ceramic, stone, and decorative wall tile patterns</p>
             </div>
-            <div className={`rounded-xl shadow-md p-6 text-center border hover:shadow-lg transition-all transform hover:-translate-y-1 duration-300 ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#3a3a3a]' : 'bg-white border-[#00A5B5]'}`}>
-              <div className="w-12 h-12 bg-gradient-to-br from-[#00A5B5] to-[#006B74] rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-white"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            <div className={`rounded-xl shadow-md p-4 md:p-6 text-center border hover:shadow-lg transition-all transform hover:-translate-y-1 duration-300 ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#3a3a3a]' : 'bg-white border-[#00A5B5]'}`}>
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[#00A5B5] to-[#006B74] rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 md:w-6 md:h-6 text-white"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
               </div>
-              <h3 className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-gray-50' : 'text-[#00343C]'}`}>Fabric Design</h3>
-              <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Create patterns for clothing, upholstery, and textiles</p>
+              <h3 className={`text-base md:text-lg font-medium mb-1 md:mb-2 ${theme === 'dark' ? 'text-gray-50' : 'text-[#00343C]'}`}>Fabric Design</h3>
+              <p className={`text-xs md:text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Create patterns for clothing, upholstery, and textiles</p>
             </div>
-            <div className={`rounded-xl shadow-md p-6 text-center border hover:shadow-lg transition-all transform hover:-translate-y-1 duration-300 ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#3a3a3a]' : 'bg-white border-[#00A5B5]'}`}>
-              <div className="w-12 h-12 bg-gradient-to-br from-[#00A5B5] to-[#82E9F0] rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-white"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <div className={`rounded-xl shadow-md p-4 md:p-6 text-center border hover:shadow-lg transition-all transform hover:-translate-y-1 duration-300 ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#3a3a3a]' : 'bg-white border-[#00A5B5]'}`}>
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[#00A5B5] to-[#82E9F0] rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 md:w-6 md:h-6 text-white"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
               </div>
-              <h3 className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-gray-50' : 'text-[#00343C]'}`}>Digital Art</h3>
-              <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Create backgrounds and textures for websites and apps</p>
+              <h3 className={`text-base md:text-lg font-medium mb-1 md:mb-2 ${theme === 'dark' ? 'text-gray-50' : 'text-[#00343C]'}`}>Digital Art</h3>
+              <p className={`text-xs md:text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Create backgrounds and textures for websites and apps</p>
             </div>
-            <div className={`rounded-xl shadow-md p-6 text-center border hover:shadow-lg transition-all transform hover:-translate-y-1 duration-300 ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#3a3a3a]' : 'bg-white border-[#00A5B5]'}`}>
-              <div className="w-12 h-12 bg-gradient-to-br from-[#00343C] to-[#006B74] rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-white"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+            <div className={`rounded-xl shadow-md p-4 md:p-6 text-center border hover:shadow-lg transition-all transform hover:-translate-y-1 duration-300 ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#3a3a3a]' : 'bg-white border-[#00A5B5]'}`}>
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[#00343C] to-[#006B74] rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 md:w-6 md:h-6 text-white"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
               </div>
-              <h3 className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-gray-50' : 'text-[#00343C]'}`}>Packaging</h3>
-              <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Design wrapping papers and product packaging patterns</p>
+              <h3 className={`text-base md:text-lg font-medium mb-1 md:mb-2 ${theme === 'dark' ? 'text-gray-50' : 'text-[#00343C]'}`}>Packaging</h3>
+              <p className={`text-xs md:text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-[#006B74]'}`}>Design wrapping papers and product packaging patterns</p>
             </div>
           </div>
         </div>
@@ -531,63 +565,63 @@ const Home = () => {
       {/* Removed repeated Sample Gallery and Use Cases sections to avoid duplication */}
 
       {/* CTA Section */}
-      <section className={`py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden ${theme === 'dark' ? 'bg-[#242424]' : 'bg-white'}`}>
+      <section className={`py-12 md:py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden ${theme === 'dark' ? 'bg-[#242424]' : 'bg-white'}`}>
         <div className="absolute inset-0 z-0">
-          <div className={`absolute right-0 bottom-0 w-96 h-96 rounded-full blur-3xl opacity-30 ${theme === 'dark' ? 'bg-blue-900/20' : 'bg-indigo-100'}`}></div>
-          <div className={`absolute left-0 top-0 w-96 h-96 rounded-full blur-3xl opacity-30 ${theme === 'dark' ? 'bg-cyan-900/20' : 'bg-purple-100'}`}></div>
+          <div className={`absolute right-0 bottom-0 w-64 md:w-96 h-64 md:h-96 rounded-full blur-3xl opacity-30 ${theme === 'dark' ? 'bg-blue-900/20' : 'bg-indigo-100'}`}></div>
+          <div className={`absolute left-0 top-0 w-64 md:w-96 h-64 md:h-96 rounded-full blur-3xl opacity-30 ${theme === 'dark' ? 'bg-cyan-900/20' : 'bg-purple-100'}`}></div>
         </div>
 
         <div className="max-w-5xl mx-auto relative z-10">
-          <div className={`rounded-2xl shadow-xl p-8 md:p-12 text-center border ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#3a3a3a] ring-1 ring-[#3a3a3a]' : 'bg-white border-gray-100'}`}>
-            <h2 className={`text-3xl font-bold mb-4 ${theme === 'dark' ? 'text-gray-50' : 'text-gray-900'}`}>Ready to Create Seamless Patterns?</h2>
-            <p className={`text-xl mb-8 max-w-3xl mx-auto ${theme === 'dark' ? 'text-gray-200' : 'text-gray-600'}`}>
+          <div className={`rounded-xl md:rounded-2xl shadow-xl p-6 md:p-8 lg:p-12 text-center border ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#3a3a3a] ring-1 ring-[#3a3a3a]' : 'bg-white border-gray-100'}`}>
+            <h2 className={`text-2xl md:text-3xl font-bold mb-3 md:mb-4 ${theme === 'dark' ? 'text-gray-50' : 'text-gray-900'}`}>Ready to Create Seamless Patterns?</h2>
+            <p className={`text-lg md:text-xl mb-6 md:mb-8 max-w-3xl mx-auto px-4 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-600'}`}>
               Start designing patterns that tile perfectly with FlowTile's smart edge-wrapping technology. No technical knowledge required.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
               <GradientButton to="/editor" primary>
-                Start Creating Free <ArrowRight className="ml-2 h-5 w-5" />
+                Start Creating Free <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
               </GradientButton>
               <GradientButton to="/projects">
                 Browse Projects
               </GradientButton>
             </div>
-            <p className={`text-sm mt-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No signup required • Works in your browser</p>
+            <p className={`text-xs md:text-sm mt-3 md:mt-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No signup required • Works in your browser</p>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className={`py-12 px-4 sm:px-6 lg:px-8 text-white ${theme === 'dark' ? 'bg-[#1e1e1e]' : 'bg-gray-900'}`}>
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+      <footer className={`py-8 md:py-12 px-4 sm:px-6 lg:px-8 text-white ${theme === 'dark' ? 'bg-[#1e1e1e]' : 'bg-gray-900'}`}>
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           <div>
-            <div className="flex items-center mb-4">
-              <img src="/flowtile.svg" alt="FlowTile Logo" className="h-8 w-8 mr-2" />
-              <h3 className="text-xl font-semibold">FlowTile</h3>
+            <div className="flex items-center mb-3 md:mb-4">
+              <img src="/flowtile.svg" alt="FlowTile Logo" className="h-6 w-6 md:h-8 md:w-8 mr-2" />
+              <h3 className="text-lg md:text-xl font-semibold">FlowTile</h3>
             </div>
-            <p className="text-gray-400">
+            <p className="text-gray-400 text-sm md:text-base">
               Create seamless, repeating patterns with smart edge-wrapping technology. Perfect for tiles, fabrics, and digital art.
             </p>
           </div>
           <div>
-            <h4 className="text-lg font-medium mb-4">Quick Links</h4>
+            <h4 className="text-base md:text-lg font-medium mb-3 md:mb-4">Quick Links</h4>
             <ul className="space-y-2">
-              <li><Link to="/editor" className="text-gray-400 hover:text-white transition">Pattern Editor</Link></li>
-              <li><Link to="/projects" className="text-gray-400 hover:text-white transition">My Projects</Link></li>
+              <li><Link to="/editor" className="text-gray-400 hover:text-white transition text-sm md:text-base">Pattern Editor</Link></li>
+              <li><Link to="/projects" className="text-gray-400 hover:text-white transition text-sm md:text-base">My Projects</Link></li>
             </ul>
           </div>
           <div>
-            <h4 className="text-lg font-medium mb-4">Open Source</h4>
+            <h4 className="text-base md:text-lg font-medium mb-3 md:mb-4">Open Source</h4>
             <a
               href="https://github.com/VinayDangodra28/flowtile"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-gray-400 hover:text-white transition"
+              className="flex items-center gap-2 text-gray-400 hover:text-white transition text-sm md:text-base"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                className="w-5 h-5"
+                className="w-4 h-4 md:w-5 md:h-5"
               >
                 <path
                   fillRule="evenodd"
@@ -597,13 +631,13 @@ const Home = () => {
               </svg>
               View on GitHub
             </a>
-            <p className="text-gray-400 text-sm mt-2">
+            <p className="text-gray-400 text-xs md:text-sm mt-2">
               Free and open source pattern design tool
             </p>
           </div>
         </div>
-        <div className={`mt-8 pt-8 border-t text-center ${theme === 'dark' ? 'border-gray-700 text-gray-400' : 'border-gray-800 text-gray-500'}`}>
-          <p>&copy; {new Date().getFullYear()} FlowTile. Free to use for everyone.</p>
+        <div className={`mt-6 md:mt-8 pt-6 md:pt-8 border-t text-center ${theme === 'dark' ? 'border-gray-700 text-gray-400' : 'border-gray-800 text-gray-500'}`}>
+          <p className="text-xs md:text-sm">&copy; {new Date().getFullYear()} FlowTile. Free to use for everyone.</p>
         </div>
       </footer>
     </div>
