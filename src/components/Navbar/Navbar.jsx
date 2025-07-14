@@ -105,7 +105,7 @@ const Navbar = () => {
             className="h-8 w-8 md:h-12 md:w-12"
           />
         </Link>
-        <h1 className={`text-lg md:text-2xl font-semibold ml-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>FlowTile</h1>
+        <h1 className={`text-lg md:text-2xl font-bold ml-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`} style={{ fontFamily: 'Garbata, sans-serif' }}>FlowTile</h1>
         
         {/* Project Name Display - Only show when in editor and on desktop */}
         {isEditorPage && currentProject && !isMobile && (

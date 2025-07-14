@@ -29,8 +29,8 @@ const Editor = () => {
   const [resizing, setResizing] = useState(false);
   const [rotating, setRotating] = useState(false);
   const [gridImage, setGridImage] = useState(null);
-  const [gridCols, setGridCols] = useState(10);
-  const [gridRows, setGridRows] = useState(10);
+  const [gridCols, setGridCols] = useState(5);
+  const [gridRows, setGridRows] = useState(5);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [activeSection, setActiveSection] = useState("elements");
   const [maxCanvasWidth, setMaxCanvasWidth] = useState(800); // Default max width

@@ -165,7 +165,7 @@ const TileBurst = () => {
     <span className="relative inline-block cursor-pointer">
       <span
         ref={textRef}
-        className={`relative z-20 font-bold text-4xl sm:text-5xl md:text-6xl whitespace-nowrap ${theme === 'dark' ? '' : ''}`}
+        className={`relative z-20 font-bold text-4xl sm:text-5xl md:text-6xl line-clamp-3 whitespace-nowrap  ${theme === 'dark' ? '' : ''}`}
         style={{
           color: theme === 'dark' ? darkText : lightText,
           WebkitTextStroke: `0.25px ${theme === 'dark' ? darkStroke : lightStroke}`,
@@ -174,6 +174,10 @@ const TileBurst = () => {
           //   ? '0 2px 8px #00343C, 0 1px 0 #242424'
           //   : '0 2px 8px #82E9F0, 0 1px 0 #ffffff',
           transition: 'color 0.3s, text-shadow 0.3s',
+          marginBottom: '-20px',
+          paddingBottom: '20px',
+          paddingRight: '20px',
+          paddingLeft: '20px',
         }}
       >
         Tile Perfectly

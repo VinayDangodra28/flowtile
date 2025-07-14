@@ -190,7 +190,7 @@ const Home = () => {
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-8 md:mb-16">
-            <h1 className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 text-center justify-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+            <h1 className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 text-center justify-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`} style={{ fontFamily: 'Garbata, sans-serif' }}>
               <div className="flex flex-col md:flex-row items-center justify-center gap-2 min-h-[3.5rem] sm:min-h-[4.5rem] md:min-h-[5.5rem] lg:min-h-[6.5rem]">
                 <span>Create Patterns That</span>
                 <div className="hidden md:block">
@@ -237,7 +237,7 @@ const Home = () => {
       <section className={`py-12 md:py-16 px-4 sm:px-6 lg:px-8 ${theme === 'dark' ? 'bg-[#242424]' : 'bg-gradient-to-br from-[#00343C]/5 to-[#82E9F0]/5'}`}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8 md:mb-12">
-            <h2 className={`text-2xl md:text-3xl font-bold mb-3 md:mb-4 ${theme === 'dark' ? 'text-gray-50 relative inline-block' : 'text-[#00343C]'}`}>
+            <h2 className={`text-2xl md:text-3xl font-bold mb-3 md:mb-4 ${theme === 'dark' ? 'text-gray-50 relative inline-block' : 'text-[#00343C]'}`} style={{ fontFamily: 'Garbata, sans-serif' }}>
               How FlowTile Magic Works
               {theme === 'dark' && <span className="absolute -bottom-2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#00A5B5] to-transparent"></span>}
             </h2>
@@ -431,7 +431,7 @@ const Home = () => {
       <section className={`py-12 md:py-16 px-4 sm:px-6 lg:px-8 ${theme === 'dark' ? 'bg-[#242424]' : 'bg-gray-50'}`}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8 md:mb-12">
-            <h2 className={`text-2xl md:text-3xl font-bold mb-3 md:mb-4 ${theme === 'dark' ? 'text-gray-50 relative inline-block' : 'text-[#00343C]'}`}>
+            <h2 className={`text-2xl md:text-3xl font-bold mb-3 md:mb-4 ${theme === 'dark' ? 'text-gray-50 relative inline-block' : 'text-[#00343C]'}`} style={{ fontFamily: 'Garbata, sans-serif' }}>
               Powerful Design Tools
               {theme === 'dark' && <span className="absolute -bottom-2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#82E9F0] to-transparent"></span>}
             </h2>
@@ -502,7 +502,7 @@ const Home = () => {
         {/* <section className="py-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-[#00343C] mb-4">Pattern Examples</h2>
+              <h2 className="text-3xl font-bold text-[#00343C] mb-4" style={{ fontFamily: 'Garbata, sans-serif' }}>Pattern Examples</h2>
               <p className="text-xl text-[#00A5B5] max-w-2xl mx-auto">
                 Get inspired by what you can create with FlowTile's seamless tiling technology.
               </p>
@@ -521,7 +521,7 @@ const Home = () => {
       <section className={`py-12 md:py-16 px-4 sm:px-6 lg:px-8 ${theme === 'dark' ? 'bg-[#242424]' : 'bg-[#e6fafd]'}`}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8 md:mb-12">
-            <h2 className={`text-2xl md:text-3xl font-bold mb-3 md:mb-4 ${theme === 'dark' ? 'text-gray-50 relative inline-block' : 'text-[#00343C]'}`}>
+            <h2 className={`text-2xl md:text-3xl font-bold mb-3 md:mb-4 ${theme === 'dark' ? 'text-gray-50 relative inline-block' : 'text-[#00343C]'}`} style={{ fontFamily: 'Garbata, sans-serif' }}>
               Perfect For
               {theme === 'dark' && <span className="absolute -bottom-2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#00A5B5] to-transparent"></span>}
             </h2>
@@ -573,7 +573,7 @@ const Home = () => {
 
         <div className="max-w-5xl mx-auto relative z-10">
           <div className={`rounded-xl md:rounded-2xl shadow-xl p-6 md:p-8 lg:p-12 text-center border ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#3a3a3a] ring-1 ring-[#3a3a3a]' : 'bg-white border-gray-100'}`}>
-            <h2 className={`text-2xl md:text-3xl font-bold mb-3 md:mb-4 ${theme === 'dark' ? 'text-gray-50' : 'text-gray-900'}`}>Ready to Create Seamless Patterns?</h2>
+            <h2 className={`text-2xl md:text-3xl font-bold mb-3 md:mb-4 ${theme === 'dark' ? 'text-gray-50' : 'text-gray-900'}`} style={{ fontFamily: 'Garbata, sans-serif' }}>Ready to Create Seamless Patterns?</h2>
             <p className={`text-lg md:text-xl mb-6 md:mb-8 max-w-3xl mx-auto px-4 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-600'}`}>
               Start designing patterns that tile perfectly with FlowTile's smart edge-wrapping technology. No technical knowledge required.
             </p>
@@ -596,7 +596,7 @@ const Home = () => {
           <div>
             <div className="flex items-center mb-3 md:mb-4">
               <img src="/flowtile.svg" alt="FlowTile Logo" className="h-6 w-6 md:h-8 md:w-8 mr-2" />
-              <h3 className="text-lg md:text-xl font-semibold">FlowTile</h3>
+              <h3 className="text-lg md:text-xl font-semibold" style={{ fontFamily: 'Garbata, sans-serif' }}>FlowTile</h3>
             </div>
             <p className="text-gray-400 text-sm md:text-base">
               Create seamless, repeating patterns with smart edge-wrapping technology. Perfect for tiles, fabrics, and digital art.
