@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from "../../context";
 
 
 const TileBurst = () => {

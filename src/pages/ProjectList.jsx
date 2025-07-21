@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { saveProject as saveProjectModel, loadProject as loadProjectModel, listProjects, deleteProject as deleteProjectModel } from "./utils/projectModel";
+import { saveProject as saveProjectModel, loadProject as loadProjectModel, listProjects, deleteProject as deleteProjectModel } from "../services";
 import { useNavigate } from "react-router-dom";
 import { Plus, Trash2, Edit3, Calendar, Layers, Maximize2, Search, Grid, List, RefreshCw } from "lucide-react";
-import { useTheme } from "./context/ThemeContext";
+import { useTheme } from "../context";
 
 const ProjectList = () => {
   const navigate = useNavigate();

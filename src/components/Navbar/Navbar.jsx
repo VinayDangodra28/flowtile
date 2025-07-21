@@ -1,9 +1,9 @@
 // components/Navbar/Navbar.js
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useTheme } from "../../context/ThemeContext";
-import { useProject } from "../../context/ProjectContext";
-import { renameProject } from "../../utils/projectModel";
+import { useTheme } from "../../context";
+import { useProject } from "../../context";
+import { renameProject } from "../../services";
 import { Menu, X } from "lucide-react";
 
 const Navbar = () => {

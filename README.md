@@ -1,8 +1,28 @@
 # FlowTile
 
-**FlowTile** is a powerful web-based visual design editor for creating geometric patterns, layouts, and artistic compositions. With an intuitive interface and comprehensive toolset, FlowTile empowers designers to create stunning visual designs with precision and ease.
+<div align="center">
 
-**[Live Demo](https://flowtile.vercel.app)**
+![FlowTile Logo](public/flowtile.svg)
+
+**A powerful web-based visual design editor for creating geometric patterns, layouts, and artistic compositions**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub Stars](https://img.shields.io/github/stars/VinayDangodra28/flowtile?style=social)](https://github.com/VinayDangodra28/flowtile/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/VinayDangodra28/flowtile?style=social)](https://github.com/VinayDangodra28/flowtile/network/members)
+[![GitHub Issues](https://img.shields.io/github/issues/VinayDangodra28/flowtile)](https://github.com/VinayDangodra28/flowtile/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/VinayDangodra28/flowtile)](https://github.com/VinayDangodra28/flowtile/pulls)
+
+[**🚀 Live Demo**](https://flowtile.vercel.app) • 
+[**📖 Documentation**](https://flowtile.vercel.app/docs) • 
+[**🤝 Contributing**](CONTRIBUTING.md) • 
+[**🐛 Report Bug**](https://github.com/VinayDangodra28/flowtile/issues/new?template=bug_report.md) • 
+[**💡 Request Feature**](https://github.com/VinayDangodra28/flowtile/issues/new?template=feature_request.md)
+
+</div>
+
+---
+
+**FlowTile** is an intuitive, browser-based design editor that empowers creators to build stunning geometric patterns, layouts, and artistic compositions. With precision tools, smart guides, and an extensible architecture, FlowTile makes complex design work accessible to everyone.
 
 ## Key Features
 
@@ -103,15 +123,40 @@ flowtile/
 
 ## Contributing
 
-We welcome contributions! Here's how you can help:
+We welcome contributions from the community! FlowTile is open source and thrives on collaboration.
+
+### 🚀 Quick Start for Contributors
 
 1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
+2. **Clone** your fork: `git clone https://github.com/YOUR_USERNAME/flowtile.git`
+3. **Install** dependencies: `npm install`
+4. **Start** development: `npm run dev`
+5. **Make** your changes and submit a pull request
 
-## Acknowledgments
+### 📋 How to Contribute
+
+- 🐛 **Report bugs** using our [bug report template](https://github.com/VinayDangodra28/flowtile/issues/new?template=bug_report.md)
+- 💡 **Suggest features** using our [feature request template](https://github.com/VinayDangodra28/flowtile/issues/new?template=feature_request.md)
+- 📖 **Improve documentation** by fixing typos or adding examples
+- 🎨 **Enhance the UI/UX** with design improvements
+- ⚡ **Optimize performance** and fix accessibility issues
+- 🧪 **Add tests** to improve code coverage
+
+### 🎯 Areas We Need Help With
+
+- **Mobile Responsiveness**: Touch controls and mobile-first design
+- **Accessibility**: ARIA labels, keyboard navigation, screen reader support  
+- **Testing**: Unit tests, integration tests, and end-to-end tests
+- **Performance**: Canvas optimization and memory management
+- **Documentation**: Tutorials, guides, and API documentation
+
+For detailed guidelines, please read our [**Contributing Guide**](CONTRIBUTING.md).
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
 
 - Built with React and modern web technologies
 - Icons provided by [Lucide](https://lucide.dev/) and [React Icons](https://react-icons.github.io/)

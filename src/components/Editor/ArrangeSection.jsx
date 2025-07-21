@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FaLock, FaLockOpen, FaPalette, FaSlidersH, FaTrash, FaArrowsAltV, FaLayerGroup, FaSun, FaRedo, FaBullseye } from "react-icons/fa";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../../context";
 
 const ArrangeSection = ({ selectedShape, moveShapeUp, moveShapeDown, deleteShape, setShapes, shapes, duplicateShape, canvasSize, setSelectedShape, canvasBg, setCanvasBg }) => {
   const { theme } = useTheme();

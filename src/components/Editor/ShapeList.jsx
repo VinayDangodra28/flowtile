@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Circle, Square, Triangle, ImageIcon, Lock, Unlock, Eye, EyeOff, Layers } from "lucide-react";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../../context";
 
 const ShapeIcon = ({ type }) => {
   switch (type) {

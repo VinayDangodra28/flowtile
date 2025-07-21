@@ -8,12 +8,24 @@ import ImagesSection from "./ImagesSection";
 import CanvasSection from "./CanvasSection";
 import ArrangeSection from "./ArrangeSection";
 import { GridSection } from "./GridSection";
-import './styles.css'
-import { saveProject as saveProjectModel, loadProject as loadProjectModel, listProjects, saveImageToIndexedDB, getImageFromIndexedDB, renameProject } from "../../utils/projectModel";
+import '../../styles/editor.css'
+import { saveProject as saveProjectModel, loadProject as loadProjectModel, listProjects, saveImageToIndexedDB, getImageFromIndexedDB, renameProject } from "../../services";
 import { FaUndo, FaRedo, FaFileExport, FaFileImport, FaDownload, FaSave, FaFolderOpen, FaImage } from "react-icons/fa";
-import { useTheme } from "../../context/ThemeContext";
-import { useProject } from "../../context/ProjectContext";
+import { useTheme } from "../../context";
+import { useProject } from "../../context";
 import { Maximize2 } from "lucide-react";
+import {
+  DEFAULT_CANVAS_SIZE,
+  DEFAULT_MAX_CANVAS_WIDTH,
+  DEFAULT_MAX_CANVAS_HEIGHT,
+  DEFAULT_GRID_COLS,
+  DEFAULT_GRID_ROWS,
+  DEFAULT_BRICK_OFFSET,
+  DEFAULT_BORDER_WIDTH,
+  DEFAULT_BORDER_COLOR,
+  EDITOR_SECTIONS,
+  TILE_TYPES
+} from "../../constants";
 
 const Editor = () => {
   const { projectName } = useParams();
@@ -22,29 +34,29 @@ const Editor = () => {
   const { setCurrentProject, updateProjectName } = useProject();
   const canvasRef = useRef(null);
   const parentRef = useRef(null);
-  const [canvasSize, setCanvasSize] = useState({ width: 500, height: 500 });
+  const [canvasSize, setCanvasSize] = useState(DEFAULT_CANVAS_SIZE);
   const [shapes, setShapes] = useState([]);
   const [selectedShape, setSelectedShape] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [resizing, setResizing] = useState(false);
   const [rotating, setRotating] = useState(false);
   const [gridImage, setGridImage] = useState(null);
-  const [gridCols, setGridCols] = useState(5);
-  const [gridRows, setGridRows] = useState(5);
+  const [gridCols, setGridCols] = useState(DEFAULT_GRID_COLS);
+  const [gridRows, setGridRows] = useState(DEFAULT_GRID_ROWS);
   const [draggedIndex, setDraggedIndex] = useState(null);
-  const [activeSection, setActiveSection] = useState("elements");
-  const [maxCanvasWidth, setMaxCanvasWidth] = useState(800); // Default max width
-  const [maxCanvasHeight, setMaxCanvasHeight] = useState(600); // Default max height
+  const [activeSection, setActiveSection] = useState(EDITOR_SECTIONS.ELEMENTS);
+  const [maxCanvasWidth, setMaxCanvasWidth] = useState(DEFAULT_MAX_CANVAS_WIDTH);
+  const [maxCanvasHeight, setMaxCanvasHeight] = useState(DEFAULT_MAX_CANVAS_HEIGHT);
   const [isSnapping, setIsSnapping] = useState(false); // Track snapping state
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
   const [prevShapeState, setPrevShapeState] = useState(null); // Track previous shape state
   const [lastAction, setLastAction] = useState(null); // Track last action type
-  const [tileType, setTileType] = useState("square");
-  const [brickOffset, setBrickOffset] = useState(50); // for brick offset
+  const [tileType, setTileType] = useState(TILE_TYPES.SQUARE);
+  const [brickOffset, setBrickOffset] = useState(DEFAULT_BRICK_OFFSET);
   const [borderEnabled, setBorderEnabled] = useState(false);
-  const [borderWidth, setBorderWidth] = useState(2);
-  const [borderColor, setBorderColor] = useState("#000000");
+  const [borderWidth, setBorderWidth] = useState(DEFAULT_BORDER_WIDTH);
+  const [borderColor, setBorderColor] = useState(DEFAULT_BORDER_COLOR);
   const [pendingDownload, setPendingDownload] = useState(false);
   const [pendingExport, setPendingExport] = useState(false);
   const [pendingGrid, setPendingGrid] = useState(false);

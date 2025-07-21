@@ -1,10 +1,9 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Maximize2, Repeat, Grid, Layers, Download, RotateCw, Copy, Palette } from "lucide-react";
-import SampleGallery from "./components/SampleGallery";
-import "./components/styles/homepage.css";
-import TileBurst from "./components/tileburst";
-import { useTheme } from "./context/ThemeContext";
+import { SampleGallery, TileBurst } from "../components/shared";
+import "../styles/homepage.css";
+import { useTheme } from "../context";
 
 // Colors from logo and complementary palette
 const logoColors = [

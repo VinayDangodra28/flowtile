@@ -10,7 +10,7 @@ import ElementsSection from "./ElementsSection";
 import ShapeList from "./ShapeList";
 import CanvasSection from "./CanvasSection";
 import { GridSection } from "./GridSection";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../../context";
 
 const Sidebar = ({ onSectionClick, activeSection, addShape, handleImageUpload, shapes, onSelectShape, onReorder, onLockShape, canvasSize, updateCanvasSize, downloadCanvas, setGridCols, setGridRows, gridCols, gridRows, generateGridImageWithWorker, showGrid, downloadGrid, gridImage, borderEnabled, setBorderEnabled, borderWidth, setBorderWidth, borderColor, setBorderColor }) => {
   const { theme } = useTheme();

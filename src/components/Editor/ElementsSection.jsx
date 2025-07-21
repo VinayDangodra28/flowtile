@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Circle, Square, Triangle, ImagePlus, X } from "lucide-react";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../../context";
 
 const shapeIcons = {
   square: <Square className="w-5 h-5" />,

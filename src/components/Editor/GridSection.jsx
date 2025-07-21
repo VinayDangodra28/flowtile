@@ -1,6 +1,6 @@
 import React from "react";
 import { Grid3x3, Download, Settings } from "lucide-react";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../../context";
 
 export const GridSection = ({
   setGridCols,
