@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useTheme } from "../context";
+
+import { Helmet } from "react-helmet-async";
 import { 
   ChevronDown, 
   ChevronRight, 
@@ -137,7 +139,44 @@ const DocsPage = () => {
   );
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#1a1a1a]' : 'bg-gray-50'}`}>
+    <>
+    <Helmet>
+  <title>Docs | FlowTile</title>
+  <meta name="title" content="Docs | FlowTile - Comprehensive Documentation & Help" />
+  <meta name="description" content="Explore detailed guides on using FlowTile's features, tools, and interface. Discover keyboard shortcuts, export options, and tips for maximizing your use of the FlowTile editor." />
+  <meta name="robots" content="index, follow" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="language" content="English" />
+  <link rel="canonical" href="https://flowtile.vercel.app/docs" />
+  <link rel="icon" href="/flowtile.svg" type="image/svg+xml" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://flowtile.vercel.app/docs" />
+  <meta property="og:site_name" content="FlowTile" />
+  <meta property="og:title" content="Docs | FlowTile - Comprehensive Documentation & Help" />
+  <meta property="og:description" content="Explore detailed guides on using FlowTile's features, tools, and interface. Discover keyboard shortcuts, export options, and tips for maximizing your use of the FlowTile editor." />
+  <meta property="og:image" content="https://flowtile.vercel.app/banner.webp" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://flowtile.vercel.app/docs" />
+  <meta name="twitter:title" content="Docs | FlowTile - Comprehensive Documentation & Help" />
+  <meta name="twitter:description" content="Explore detailed guides on using FlowTile's features, tools, and interface. Discover keyboard shortcuts, export options, and tips for maximizing your use of the FlowTile editor." />
+  <meta name="twitter:image" content="https://flowtile.vercel.app/banner.webp" />
+  <script type="application/ld+json">
+    {JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "FlowTile Documentation",
+      "url": "https://flowtile.vercel.app/docs",
+      "description": "Explore detailed guides on using FlowTile's features, tools, and interface. Discover keyboard shortcuts, export options, and tips for maximizing your use of the FlowTile editor.",
+      "publisher": {
+        "@type": "Person",
+        "name": "Vinay Dangodra"
+      }
+    })}
+  </script>
+</Helmet>
+
+      <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#1a1a1a]' : 'bg-gray-50'}`}>
       {/* Header */}
       <div className={`border-b ${
         theme === 'dark' 
@@ -686,6 +725,8 @@ const DocsPage = () => {
         </footer>
       </div>
     </div>
+    </>
+    
   );
 };
 

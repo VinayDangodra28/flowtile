@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Plus, Trash2, Edit3, Calendar, Layers, Maximize2, Search, Grid, List, RefreshCw } from "lucide-react";
 import { useTheme } from "../context";
 
+import { Helmet } from "react-helmet-async";
 const ProjectList = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
@@ -293,7 +294,44 @@ const ProjectList = () => {
   );
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#242424]' : 'bg-gradient-to-br from-gray-50 to-gray-100'}`}>
+    <>
+    <Helmet>
+  <title>Projects | FlowTile</title>
+  <meta name="title" content="Projects | FlowTile - Organize Your Tile Designs" />
+  <meta name="description" content="View, manage, and organize your FlowTile projects. Access your creative tile-based designs and start editing or creating new projects with ease." />
+  <meta name="robots" content="index, follow" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="language" content="English" />
+  <link rel="canonical" href="https://flowtile.vercel.app/projects" />
+  <link rel="icon" href="/flowtile.svg" type="image/svg+xml" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://flowtile.vercel.app/projects" />
+  <meta property="og:site_name" content="FlowTile" />
+  <meta property="og:title" content="Projects | FlowTile - Organize Your Tile Designs" />
+  <meta property="og:description" content="View, manage, and organize your FlowTile projects. Access your creative tile-based designs and start editing or creating new projects with ease." />
+  <meta property="og:image" content="https://flowtile.vercel.app/banner.webp" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://flowtile.vercel.app/projects" />
+  <meta name="twitter:title" content="Projects | FlowTile - Organize Your Tile Designs" />
+  <meta name="twitter:description" content="View, manage, and organize your FlowTile projects. Access your creative tile-based designs and start editing or creating new projects with ease." />
+  <meta name="twitter:image" content="https://flowtile.vercel.app/banner.webp" />
+  <script type="application/ld+json">
+    {JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "FlowTile Projects",
+      "url": "https://flowtile.vercel.app/projects",
+      "description": "View, manage, and organize your FlowTile projects. Access your creative tile-based designs and start editing or creating new projects with ease.",
+      "publisher": {
+        "@type": "Person",
+        "name": "Vinay Dangodra"
+      }
+    })}
+  </script>
+</Helmet>
+
+<div className={`min-h-screen ${theme === 'dark' ? 'bg-[#242424]' : 'bg-gradient-to-br from-gray-50 to-gray-100'}`}>
       {/* Show mobile warning on small screens */}
       <MobileWarning />
       
@@ -461,6 +499,8 @@ const ProjectList = () => {
       )}
       </div>
     </div>
+    </>
+    
   );
 };
 

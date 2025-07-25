@@ -14,6 +14,8 @@ import { FaUndo, FaRedo, FaFileExport, FaFileImport, FaDownload, FaSave, FaFolde
 import { useTheme } from "../../context";
 import { useProject } from "../../context";
 import { Maximize2 } from "lucide-react";
+
+import { Helmet } from "react-helmet-async";
 import {
   DEFAULT_CANVAS_SIZE,
   DEFAULT_MAX_CANVAS_WIDTH,
@@ -1108,6 +1110,48 @@ const Editor = () => {
   }, [setCurrentProject]);
 
   return (
+    <>
+    <Helmet>
+  <title>Editor | FlowTile</title>
+  <meta name="title" content="Editor | FlowTile - Design Seamless Tile Patterns" />
+  <meta name="description" content="Utilize FlowTile's visual editor to craft seamless, repeating tile patterns. Incorporate shapes, images, and export your designs as PNG or SVG for your creative projects." />
+  <meta name="robots" content="index, follow" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="language" content="English" />
+  <link rel="canonical" href="https://flowtile.vercel.app/editor" />
+  <link rel="icon" href="/flowtile.svg" type="image/svg+xml" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://flowtile.vercel.app/editor" />
+  <meta property="og:site_name" content="FlowTile" />
+  <meta property="og:title" content="Editor | FlowTile - Design Seamless Tile Patterns" />
+  <meta property="og:description" content="Utilize FlowTile's visual editor to craft seamless, repeating tile patterns. Incorporate shapes, images, and export your designs as PNG or SVG for your creative projects." />
+  <meta property="og:image" content="https://flowtile.vercel.app/banner.webp" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://flowtile.vercel.app/editor" />
+  <meta name="twitter:title" content="Editor | FlowTile - Design Seamless Tile Patterns" />
+  <meta name="twitter:description" content="Utilize FlowTile's visual editor to craft seamless, repeating tile patterns. Incorporate shapes, images, and export your designs as PNG or SVG for your creative projects." />
+  <meta name="twitter:image" content="https://flowtile.vercel.app/banner.webp" />
+  <script type="application/ld+json">
+    {JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "FlowTile Editor",
+      "url": "https://flowtile.vercel.app/editor",
+      "image": "https://flowtile.vercel.app/banner.webp",
+      "description": "Utilize FlowTile's visual editor to craft seamless, repeating tile patterns. Incorporate shapes, images, and export your designs as PNG or SVG for your creative projects.",
+      "applicationCategory": "DesignApplication",
+      "operatingSystem": "All",
+      "browserRequirements": "Requires JavaScript",
+      "creator": {
+        "@type": "Person",
+        "name": "Vinay Dangodra"
+      }
+    })}
+  </script>
+</Helmet>
+
+      
     <div ref={parentRef} className={`flex flex-col editor ${theme === 'dark' ? 'bg-[#242424]' : 'bg-gray-50'}`} style={{ height: "90vh" }}>
       <div className="flex flex-1" style={{ height: "calc(90vh - 70px)" }}>
         {/* Left Sidebar */}
@@ -1428,6 +1472,7 @@ const Editor = () => {
         </div>
       )}
     </div>
+    </>
   );
 
 };
