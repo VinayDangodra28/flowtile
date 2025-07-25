@@ -172,43 +172,7 @@ const Home = () => {
   return (
     <>
       <Helmet>
-        <title>FlowTile</title>
-        <meta name="title" content="FlowTile – Seamless Tile Pattern Editor for Creative Projects and Visual Designers" />
-        <meta name="description" content="FlowTile is a modern visual editor to design and export seamless, infinitely repeatable tile patterns. Ideal for creatives, game designers, and visual artists." />
-        <meta name="robots" content="index, follow" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
-        <meta name="language" content="English" />
-        <link rel="canonical" href="https://flowtile.vercel.app/" />
-        <link rel="icon" href="/flowtile.svg" type="image/svg+xml" />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://flowtile.vercel.app/" />
-        <meta property="og:site_name" content="FlowTile" />
-        <meta property="og:title" content="FlowTile – Seamless Tile Pattern Editor for Creative Projects and Visual Designers" />
-        <meta property="og:description" content="Design and export modular, repeatable tile-based graphics with FlowTile. A tool for seamless pattern design in games, digital art, and creative projects." />
-        <meta property="og:image" content="https://flowtile.vercel.app/banner.webp" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:url" content="https://flowtile.vercel.app/" />
-        <meta name="twitter:title" content="FlowTile – Seamless Tile Pattern Editor for Creative Projects and Visual Designers" />
-        <meta name="twitter:description" content="Create export-ready, infinitely repeatable tile graphics with FlowTile – the intuitive visual tool for creatives." />
-        <meta name="twitter:image" content="https://flowtile.vercel.app/banner.webp" />
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            "name": "FlowTile",
-            "url": "https://flowtile.vercel.app/",
-            "image": "https://flowtile.vercel.app/banner.webp",
-            "description": "FlowTile is a modern visual editor to design and export seamless, infinitely repeatable tile patterns. Ideal for creatives, game designers, and visual artists.",
-            "applicationCategory": "DesignApplication",
-            "operatingSystem": "All",
-            "browserRequirements": "Requires JavaScript",
-            "creator": {
-              "@type": "Person",
-              "name": "Vinay Dangodra"
-            }
-          })}
-        </script>
+       
       </Helmet>
 
       <div className={`min-h-[90vh] ${theme === 'dark' ? 'bg-[#242424]' : 'bg-gradient-to-b from-[#e6fafd] via-[#f6ffff] to-[#e6fafd]'} hero-pattern`}>
